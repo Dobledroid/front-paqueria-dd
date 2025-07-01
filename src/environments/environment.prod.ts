@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'http://localhost:3010/api'
+  apiUrl: 'https://back-paqueria-dd.onrender.com/api'
 };
