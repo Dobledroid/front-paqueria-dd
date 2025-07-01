@@ -1,0 +1,147 @@
+/* Estilos específicos del navbar */
+
+/* Efecto de transición suave para el gradiente */
+nav {
+  background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Animación para el logo */
+.flex-shrink-0 img {
+  transition: transform 0.3s ease-in-out;
+}
+
+.flex-shrink-0 img:hover {
+  transform: scale(1.05);
+}
+
+/* Efecto de brillo en el texto del logo */
+.text-white.text-xl.font-bold {
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+/* Animaciones para los enlaces de navegación */
+nav a {
+  position: relative;
+  overflow: hidden;
+}
+
+nav a::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s;
+}
+
+nav a:hover::before {
+  left: 100%;
+}
+
+/* Efecto de sombra para los botones */
+button {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+button:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
+}
+
+/* Animación para el menú mobile */
+#mobile-menu {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animación para el dropdown del perfil */
+.origin-top-right {
+  animation: fadeInScale 0.2s ease-out;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Efecto de hover mejorado para los elementos del dropdown */
+[role="menuitem"]:hover {
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  transform: translateX(2px);
+  transition: all 0.2s ease;
+}
+
+/* Indicador de notificaciones (punto rojo) */
+.bg-blue-500:has(span:contains("🔔"))::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 8px;
+  background: #ef4444;
+  border-radius: 50%;
+  border: 2px solid #2563eb;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .text-xl {
+    font-size: 1.1rem;
+  }
+  
+  .h-10 {
+    height: 2rem;
+    width: 2rem;
+  }
+}
+
+/* Animación de entrada para toda la navbar */
+nav {
+  animation: slideInFromTop 0.5s ease-out;
+}
+
+@keyframes slideInFromTop {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Estados activos con efecto de brillo */
+.bg-blue-500 {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+}
+
+/* Mejora del focus para accesibilidad */
+button:focus,
+a:focus {
+  outline: 2px solid #fbbf24;
+  outline-offset: 2px;
+}

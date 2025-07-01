@@ -1,0 +1,235 @@
+/* Estilos específicos del componente home */
+
+/* Animaciones para las tarjetas de métricas */
+.bg-white {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.bg-white:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Estilo personalizado para la tabla */
+.table-auto th {
+  position: sticky;
+  top: 0;
+  background-color: #f9fafb;
+  z-index: 10;
+}
+
+/* Responsividad para dispositivos móviles */
+@media (max-width: 768px) {
+  .overflow-x-auto {
+    font-size: 0.875rem;
+  }
+  
+  .text-3xl {
+    font-size: 1.5rem;
+  }
+  
+  .text-4xl {
+    font-size: 2rem;
+  }
+}
+
+/* Estilos para los badges de estado */
+.rounded-full {
+  border-radius: 9999px;
+}
+
+/* Mejorar la visualización del canvas */
+canvas {
+  max-height: 400px;
+}
+
+/* Mejoras para la nueva tarjeta de gastos */
+.border-red-500 {
+  border-left-color: #ef4444;
+}
+
+/* Estilos para la tarjeta de total */
+.border-indigo-500 {
+  border-left-color: #6366f1;
+}
+
+/* Animaciones mejoradas */
+.transition-shadow {
+  transition: box-shadow 0.3s ease-in-out;
+}
+
+.transition-colors {
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+/* Responsividad mejorada para 5 tarjetas */
+@media (max-width: 1024px) {
+  .lg\:grid-cols-5 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .md\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  
+  .lg\:grid-cols-5 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .md\:grid-cols-2 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+  
+  .text-4xl {
+    font-size: 1.5rem;
+  }
+  
+  .text-3xl {
+    font-size: 1.25rem;
+  }
+}
+
+/* Estilos para las nuevas columnas de la tabla */
+.max-w-xs {
+  max-width: 20rem;
+}
+
+.max-w-md {
+  max-width: 28rem;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Mejorar responsividad de la tabla con más columnas */
+@media (max-width: 768px) {
+  .overflow-x-auto {
+    font-size: 0.75rem;
+  }
+  
+  .px-4 {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  
+  .py-4 {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+  
+  .max-w-xs {
+    max-width: 12rem;
+  }
+  
+  .max-w-md {
+    max-width: 16rem;
+  }
+}
+
+/* Configuración específica para la gráfica de Chart.js */
+.w-full {
+  width: 100% !important;
+}
+
+/* Asegurar que el canvas ocupe todo el ancho disponible */
+canvas#barChart {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+/* Contenedor de la gráfica */
+.h-96 {
+  height: 24rem;
+  min-height: 400px;
+}
+
+/* Estilos para el modal */
+.fixed.inset-0.z-50 {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.inline-block.align-bottom {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Estilos para los botones de acción en la tabla */
+.table-auto .text-blue-600:hover {
+  transform: scale(1.1);
+}
+
+.table-auto .text-red-600:hover {
+  transform: scale(1.1);
+}
+
+/* Estilos mejorados para los formularios en el modal */
+.focus\:ring-blue-500:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Responsividad del modal */
+@media (max-width: 640px) {
+  .sm\:max-w-lg {
+    max-width: 95vw;
+    margin: 1rem;
+  }
+}
+
+/* Estilos para botones hover mejorados */
+.hover\:bg-blue-700:hover {
+  background-color: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.hover\:bg-green-700:hover {
+  background-color: #15803d;
+  transform: translateY(-1px);
+}
+
+.hover\:bg-gray-50:hover {
+  background-color: #f9fafb;
+}
+
+/* Transiciones suaves para todos los botones */
+button {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Estilos para iconos de acción en las tablas */
+.table-auto .text-blue-600, .table-auto .text-red-600 {
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  font-size: 1.2rem;
+}
+
+/* Estilo para separar los botones de acción */
+.flex.gap-2 button:not(:last-child) {
+  margin-right: 0.5rem;
+}

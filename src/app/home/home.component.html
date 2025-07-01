@@ -1,0 +1,959 @@
+<div class="container mx-auto py-8 px-4">
+  <!-- Alerta -->
+  <div *ngIf="alertMessage" class="mb-6">
+    <div
+      [ngClass]="{
+        'bg-green-100 border-green-500 text-green-700': alertType === 'success',
+        'bg-red-100 border-red-500 text-red-700': alertType === 'error'
+      }"
+      class="border-l-4 p-4 mb-4 relative"
+    >
+      <p>{{ alertMessage }}</p>
+      <button
+        (click)="cerrarAlerta()"
+        class="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+      >
+        ✕
+      </button>
+    </div>
+  </div>
+
+  <!-- Sección 1: Métricas del Mes -->
+  <section class="mb-12">
+    <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">
+      Dashboard - Junio 2025
+    </h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+      <!-- Tarjeta: Total Paquetes -->
+      <div
+        class="bg-white p-6 rounded-lg shadow-lg border-l-4 border-blue-500 hover:shadow-xl transition-shadow"
+      >
+        <div class="flex flex-col items-center text-center">
+          <div class="text-purple-600 text-3xl mb-2">📦</div>
+          <div>
+            <h3 class="text-lg font-semibold text-gray-700">Total Paquetes</h3>
+            <p class="text-3xl font-bold text-blue-600">
+              {{ metricas.totalPaquetes }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tarjeta: Inversión -->
+      <div
+        class="bg-white p-6 rounded-lg shadow-lg border-l-4 border-green-500 hover:shadow-xl transition-shadow"
+      >
+        <div class="flex flex-col items-center text-center">
+          <div class="text-green-600 text-3xl mb-2">💰</div>
+          <div>
+            <h3 class="text-lg font-semibold text-gray-700">Inversión</h3>
+            <p class="text-3xl font-bold text-green-600">
+              ${{ metricas.dineroInvertido }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tarjeta: Ganancias -->
+      <div
+        class="bg-white p-6 rounded-lg shadow-lg border-l-4 border-purple-500 hover:shadow-xl transition-shadow"
+      >
+        <div class="flex flex-col items-center text-center">
+          <div class="text-purple-600 text-3xl mb-2">📈</div>
+          <div>
+            <h3 class="text-lg font-semibold text-gray-700">Ganancias</h3>
+            <p class="text-3xl font-bold text-purple-600">
+              ${{ metricas.ganancias }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tarjeta: Gastos -->
+      <div
+        class="bg-white p-6 rounded-lg shadow-lg border-l-4 border-red-500 hover:shadow-xl transition-shadow"
+      >
+        <div class="flex flex-col items-center text-center">
+          <div class="text-red-600 text-4xl mb-2">🛒</div>
+          <div>
+            <h3 class="text-lg font-semibold text-gray-700">Gastos</h3>
+            <p class="text-3xl font-bold text-red-600">
+              ${{ metricas.gastos }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tarjeta: Total -->
+      <div
+        id="tarjeta-total"
+        class="bg-white p-6 rounded-lg shadow-lg border-l-4 border-indigo-500 hover:shadow-xl transition-shadow"
+      >
+        <div class="flex flex-col items-center text-center">
+          <div class="text-indigo-600 text-4xl mb-2">💎</div>
+          <div>
+            <h3 class="text-lg font-semibold text-gray-700">Total</h3>
+            <p id="valor-total" class="text-3xl font-bold text-indigo-600">
+              ${{ metricas.total }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sección 2: Tabla de Reportes -->
+  <section class="mb-12">
+    <div class="bg-white rounded-lg shadow-lg p-6">
+      <h2 class="text-2xl font-bold text-gray-800 mb-6">
+        Reportes de Paquetería
+      </h2>
+
+      <!-- Filtros de Fecha, Estado y Botón Agregar -->
+      <div
+        class="flex flex-col lg:flex-row gap-4 mb-6 p-4 bg-gray-50 rounded-lg"
+      >
+        <div class="flex-1">
+          <label
+            for="fechaInicio"
+            class="block text-sm font-medium text-gray-700 mb-1"
+            >Fecha Inicio</label
+          >
+          <input
+            type="date"
+            id="fechaInicio"
+            [(ngModel)]="fechaInicio"
+            (change)="aplicarFiltros()"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div class="flex-1">
+          <label
+            for="fechaFin"
+            class="block text-sm font-medium text-gray-700 mb-1"
+            >Fecha Fin</label
+          >
+          <input
+            type="date"
+            id="fechaFin"
+            [(ngModel)]="fechaFin"
+            (change)="aplicarFiltros()"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div class="flex-1">
+          <label
+            for="filtroEstado"
+            class="block text-sm font-medium text-gray-700 mb-1"
+            >Estado</label
+          >
+          <select
+            id="filtroEstado"
+            [(ngModel)]="filtroEstado"
+            (change)="aplicarFiltros()"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="todos">Todos los estados</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="en-transito">En Tránsito</option>
+            <option value="entregado">Entregado</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+        </div>
+        <div class="flex items-end gap-2">
+          <button
+            (click)="aplicarFiltros()"
+            [disabled]="loadingReports"
+            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors disabled:opacity-50"
+          >
+            {{ loadingReports ? "Filtrando..." : "Filtrar" }}
+          </button>
+          <button
+            (click)="limpiarFiltros()"
+            class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
+          >
+            Limpiar
+          </button>
+          <button
+            (click)="abrirModal()"
+            class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors"
+          >
+            Agregar Reporte
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading state -->
+      <div *ngIf="loadingReports" class="text-center py-8">
+        <div
+          class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"
+        ></div>
+        <p class="text-gray-600 mt-2">Cargando reportes...</p>
+      </div>
+
+      <!-- Tabla -->
+      <div *ngIf="!loadingReports" class="overflow-x-auto">
+        <table class="min-w-full table-auto">
+          <thead>
+            <tr class="bg-gray-100">
+              <th
+                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Fecha del Pedido
+              </th>
+              <th
+                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Destinatario
+              </th>
+              <th
+                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Ubicación
+              </th>
+              <th
+                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Costo
+              </th>
+              <th
+                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Ganancia
+              </th>
+              <th
+                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Estado
+              </th>
+              <th
+                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Comentarios
+              </th>
+              <th
+                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Acciones
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr
+              *ngFor="let reporte of reportes"
+              class="hover:bg-gray-50 transition-colors"
+            >
+              <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                {{ formatearFecha(reporte.fechaPedido) }}
+              </td>
+              <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                {{ reporte.destinatario }}
+              </td>
+              <td class="px-4 py-4 text-sm text-gray-500 max-w-xs">
+                <div class="truncate" [title]="reporte.ubicacionEntrega">
+                  {{ reporte.ubicacionEntrega }}
+                </div>
+              </td>
+              <td
+                class="px-4 py-4 whitespace-nowrap text-sm text-gray-900 font-medium"
+              >
+                {{ formatearMoneda(reporte.costo) }}
+              </td>
+              <td class="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                <span class="text-green-600">{{
+                  formatearMoneda(reporte.ganancia)
+                }}</span>
+              </td>
+              <td class="px-4 py-4 whitespace-nowrap text-sm">
+                <span
+                  [ngClass]="getEstadoClase(reporte.estado)"
+                  class="px-2 py-1 rounded-full text-xs font-medium"
+                >
+                  {{ getEstadoTexto(reporte.estado) }}
+                </span>
+              </td>
+              <td class="px-4 py-4 text-sm text-gray-600 max-w-md">
+                <div class="truncate" [title]="reporte.comentarioPedido">
+                  {{ reporte.comentarioPedido }}
+                </div>
+              </td>
+              <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                <div class="flex gap-2">
+                  <button
+                    (click)="abrirModal(reporte)"
+                    class="text-blue-600 hover:text-blue-800 transition-colors"
+                    title="Editar"
+                    [disabled]="loadingAction"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    (click)="eliminarReporte(reporte)"
+                    class="text-red-600 hover:text-red-800 transition-colors"
+                    title="Eliminar"
+                    [disabled]="loadingAction"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Mensaje cuando no hay resultados -->
+        <div *ngIf="reportes.length === 0" class="text-center py-8">
+          <p class="text-gray-500">
+            No se encontraron reportes con los filtros aplicados
+          </p>
+        </div>
+      </div>
+
+      <!-- Paginación -->
+      <div
+        *ngIf="!loadingReports && totalPaginas > 1"
+        class="flex justify-center items-center mt-6 gap-2"
+      >
+        <button
+          (click)="paginaAnterior()"
+          [disabled]="paginaActual === 1"
+          class="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Anterior
+        </button>
+
+        <div class="flex gap-1">
+          <button
+            *ngFor="let pagina of paginasArray"
+            (click)="irAPagina(pagina)"
+            [ngClass]="{
+              'bg-blue-600 text-white': pagina === paginaActual,
+              'bg-gray-200 text-gray-700': pagina !== paginaActual
+            }"
+            class="px-3 py-2 rounded-md hover:bg-blue-500 hover:text-white transition-colors"
+          >
+            {{ pagina }}
+          </button>
+        </div>
+
+        <button
+          (click)="paginaSiguiente()"
+          [disabled]="paginaActual === totalPaginas"
+          class="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Siguiente
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sección 3: Gestión de Gastos -->
+  <section class="mb-12">
+    <div class="bg-white rounded-lg shadow-lg p-6">
+      <h2 class="text-2xl font-bold text-gray-800 mb-6">Gestión de Gastos</h2>
+
+      <!-- Filtros de Fecha, Descripción y Botón Agregar -->
+      <div
+        class="flex flex-col lg:flex-row gap-4 mb-6 p-4 bg-gray-50 rounded-lg"
+      >
+        <div class="flex-1">
+          <label
+            for="fechaInicioGasto"
+            class="block text-sm font-medium text-gray-700 mb-1"
+            >Fecha Inicio</label
+          >
+          <input
+            type="date"
+            id="fechaInicioGasto"
+            [(ngModel)]="fechaInicioGasto"
+            (change)="aplicarFiltrosGasto()"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div class="flex-1">
+          <label
+            for="fechaFinGasto"
+            class="block text-sm font-medium text-gray-700 mb-1"
+            >Fecha Fin</label
+          >
+          <input
+            type="date"
+            id="fechaFinGasto"
+            [(ngModel)]="fechaFinGasto"
+            (change)="aplicarFiltrosGasto()"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div class="flex-1">
+          <label
+            for="filtroDescripcion"
+            class="block text-sm font-medium text-gray-700 mb-1"
+            >Descripción</label
+          >
+          <input
+            type="text"
+            id="filtroDescripcion"
+            [(ngModel)]="filtroDescripcion"
+            (change)="aplicarFiltrosGasto()"
+            placeholder="Buscar por descripción..."
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div class="flex items-end gap-2">
+          <button
+            (click)="aplicarFiltrosGasto()"
+            [disabled]="loadingGastos"
+            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors disabled:opacity-50"
+          >
+            {{ loadingGastos ? "Filtrando..." : "Filtrar" }}
+          </button>
+          <button
+            (click)="limpiarFiltrosGasto()"
+            class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
+          >
+            Limpiar
+          </button>
+          <button
+            (click)="abrirModalGasto()"
+            class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors"
+          >
+            Agregar Gasto
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading state -->
+      <div *ngIf="loadingGastos" class="text-center py-8">
+        <div
+          class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"
+        ></div>
+        <p class="text-gray-600 mt-2">Cargando gastos...</p>
+      </div>
+      <!-- Tabla -->
+      <div *ngIf="!loadingGastos" class="overflow-x-auto">
+        <table class="min-w-full table-auto">
+          <thead>
+            <tr class="bg-gray-100">
+              <th
+                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Fecha
+              </th>
+              <th
+                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Descripción
+              </th>
+              <th
+                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Comentarios
+              </th>
+              <th
+                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Total
+              </th>
+              <th
+                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Acciones
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr
+              *ngFor="let gasto of gastos"
+              class="hover:bg-gray-50 transition-colors"
+            >
+              <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                {{ formatearFecha(gasto.fecha) }}
+              </td>
+              <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                {{ gasto.descripcion }}
+              </td>
+              <td class="px-4 py-4 text-sm text-gray-600 max-w-md">
+                <div class="truncate" [title]="gasto.comentarios">
+                  {{ gasto.comentarios || "Sin comentarios" }}
+                </div>
+              </td>
+              <td
+                class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+              >
+                {{ formatearMoneda(gasto.total) }}
+              </td>
+              <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                <div class="flex gap-2">
+                  <button
+                    (click)="abrirModalGasto(gasto)"
+                    class="text-blue-600 hover:text-blue-800 transition-colors"
+                    title="Editar"
+                    [disabled]="loadingAction"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    (click)="eliminarGasto(gasto)"
+                    class="text-red-600 hover:text-red-800 transition-colors"
+                    title="Eliminar"
+                    [disabled]="loadingAction"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Mensaje cuando no hay resultados -->
+        <div *ngIf="gastos.length === 0" class="text-center py-8">
+          <p class="text-gray-500">
+            No se encontraron gastos con los filtros aplicados
+          </p>
+        </div>
+      </div>
+      <!-- Paginación -->
+      <div
+        *ngIf="!loadingGastos && totalPaginasGasto > 1"
+        class="flex justify-center items-center mt-6 gap-2"
+      >
+        <button
+          (click)="paginaAnteriorGasto()"
+          [disabled]="paginaActualGasto === 1"
+          class="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Anterior
+        </button>
+
+        <div class="flex gap-1">
+          <button
+            *ngFor="let pagina of paginasArrayGasto"
+            (click)="irAPaginaGasto(pagina)"
+            [ngClass]="{
+              'bg-blue-600 text-white': pagina === paginaActualGasto,
+              'bg-gray-200 text-gray-700': pagina !== paginaActualGasto
+            }"
+            class="px-3 py-2 rounded-md hover:bg-blue-500 hover:text-white transition-colors"
+          >
+            {{ pagina }}
+          </button>
+        </div>
+
+        <button
+          (click)="paginaSiguienteGasto()"
+          [disabled]="paginaActualGasto === totalPaginasGasto"
+          class="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Siguiente
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sección 4: Gráfica de Barras -->
+  <section class="mb-12">
+    <div class="bg-white rounded-lg shadow-lg p-6">
+      <h2 class="text-2xl font-bold text-gray-800 mb-6">
+        Análisis Gráfico - Últimos 6 Meses
+      </h2>
+
+      <div *ngIf="loadingChart" class="text-center py-8">
+        <div
+          class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"
+        ></div>
+        <p class="text-gray-600 mt-2">Cargando gráficas...</p>
+      </div>
+
+      <div *ngIf="!loadingChart" class="w-full h-96 mb-6">
+        <canvas #barChart class="w-full h-full"></canvas>
+      </div>
+
+      <!-- Leyenda personalizada -->
+      <div
+        *ngIf="!loadingChart"
+        class="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6"
+      >
+        <div class="flex items-center">
+          <div class="w-4 h-4 bg-blue-500 rounded mr-2"></div>
+          <span class="text-sm text-gray-600">Paquetes</span>
+        </div>
+        <div class="flex items-center">
+          <div class="w-4 h-4 bg-green-500 rounded mr-2"></div>
+          <span class="text-sm text-gray-600">Dinero Invertido</span>
+        </div>
+        <div class="flex items-center">
+          <div class="w-4 h-4 bg-purple-500 rounded mr-2"></div>
+          <span class="text-sm text-gray-600">Ganancias</span>
+        </div>
+        <div class="flex items-center">
+          <div class="w-4 h-4 bg-red-500 rounded mr-2"></div>
+          <span class="text-sm text-gray-600">Gastos</span>
+        </div>
+        <div class="flex items-center">
+          <div class="w-4 h-4 bg-indigo-500 rounded mr-2"></div>
+          <span class="text-sm text-gray-600">Total</span>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Modal para agregar/editar reportes -->
+<div *ngIf="mostrarModal" class="fixed inset-0 z-50 overflow-y-auto">
+  <div
+    class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0"
+  >
+    <!-- Overlay -->
+    <div
+      class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+      (click)="cerrarModal()"
+    ></div>
+
+    <!-- Modal panel -->
+    <div
+      class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+    >
+      <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+        <div class="sm:flex sm:items-start">
+          <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+              {{ modoEdicion ? "Editar Reporte" : "Agregar Nuevo Reporte" }}
+            </h3>
+
+            <!-- Alerta específica del modal -->
+            <div *ngIf="modalAlertMessage" class="mb-4">
+              <div
+                [ngClass]="{
+                  'bg-green-100 border-green-500 text-green-700':
+                    modalAlertType === 'success',
+                  'bg-red-100 border-red-500 text-red-700':
+                    modalAlertType === 'error'
+                }"
+                class="border-l-4 p-3 relative rounded"
+              >
+                <p class="text-sm">{{ modalAlertMessage }}</p>
+                <button
+                  (click)="cerrarAlertaModal()"
+                  class="absolute top-1 right-2 text-gray-500 hover:text-gray-700 text-sm"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <form class="space-y-4">
+              <!-- Fecha del Pedido -->
+              <div>
+                <label
+                  for="modalFechaPedido"
+                  class="block text-sm font-medium text-gray-700"
+                  >Fecha y Hora del Pedido *</label
+                >
+                <input
+                  type="datetime-local"
+                  id="modalFechaPedido"
+                  [(ngModel)]="nuevoReporte.fechaPedido"
+                  name="fechaPedido"
+                  required
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <!-- Destinatario -->
+              <div>
+                <label
+                  for="modalDestinatario"
+                  class="block text-sm font-medium text-gray-700"
+                  >Destinatario *</label
+                >
+                <input
+                  type="text"
+                  id="modalDestinatario"
+                  [(ngModel)]="nuevoReporte.destinatario"
+                  name="destinatario"
+                  required
+                  placeholder="Nombre del destinatario"
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <!-- Ubicación a Entregar -->
+              <div>
+                <label
+                  for="modalUbicacion"
+                  class="block text-sm font-medium text-gray-700"
+                  >Ubicación a Entregar *</label
+                >
+                <input
+                  type="text"
+                  id="modalUbicacion"
+                  [(ngModel)]="nuevoReporte.ubicacionEntrega"
+                  name="ubicacionEntrega"
+                  required
+                  minlength="1"
+                  placeholder="Ej: Ciudad, Estado - Colonia/Zona"
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <!-- Estado -->
+              <div>
+                <label
+                  for="modalEstado"
+                  class="block text-sm font-medium text-gray-700"
+                  >Estado *</label
+                >
+                <select
+                  id="modalEstado"
+                  [(ngModel)]="nuevoReporte.estado"
+                  name="estado"
+                  required
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="pendiente">Pendiente</option>
+                  <option value="en-transito">En Tránsito</option>
+                  <option value="entregado">Entregado</option>
+                  <option value="cancelado">Cancelado</option>
+                </select>
+              </div>
+
+              <!-- Costo -->
+              <div>
+                <label
+                  for="modalCosto"
+                  class="block text-sm font-medium text-gray-700"
+                  >Costo *</label
+                >
+                <input
+                  type="number"
+                  id="modalCosto"
+                  [(ngModel)]="nuevoReporte.costo"
+                  name="costo"
+                  required
+                  min="0"
+                  step="1"
+                  placeholder="0.00 (puede ser 0 para envíos gratuitos)"
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <!-- Ganancia -->
+              <div>
+                <label
+                  for="modalGanancia"
+                  class="block text-sm font-medium text-gray-700"
+                  >Ganancia *</label
+                >
+                <input
+                  type="number"
+                  id="modalGanancia"
+                  [(ngModel)]="nuevoReporte.ganancia"
+                  name="ganancia"
+                  required
+                  min="0"
+                  step="1"
+                  placeholder="0.00 (puede ser 0 si no hay ganancia)"
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <!-- Comentario del Pedido -->
+              <div>
+                <label
+                  for="modalComentario"
+                  class="block text-sm font-medium text-gray-700"
+                  >Comentario del Pedido</label
+                >
+                <textarea
+                  id="modalComentario"
+                  [(ngModel)]="nuevoReporte.comentarioPedido"
+                  name="comentarioPedido"
+                  rows="3"
+                  placeholder="Detalles adicionales del pedido..."
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                ></textarea>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botones del modal -->
+      <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+        <button
+          type="button"
+          (click)="guardarReporte()"
+          [disabled]="loadingAction"
+          class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
+        >
+          {{
+            loadingAction
+              ? "Guardando..."
+              : modoEdicion
+              ? "Actualizar"
+              : "Guardar"
+          }}
+        </button>
+        <button
+          type="button"
+          (click)="cerrarModal()"
+          [disabled]="loadingAction"
+          class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
+        >
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para agregar/editar gastos -->
+<div *ngIf="mostrarModalGasto" class="fixed inset-0 z-50 overflow-y-auto">
+  <div
+    class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0"
+  >
+    <!-- Overlay -->
+    <div
+      class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+      (click)="cerrarModalGasto()"
+    ></div>
+
+    <!-- Modal panel -->
+    <div
+      class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+    >
+      <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+        <div class="sm:flex sm:items-start">
+          <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+              {{ modoEdicionGasto ? "Editar Gasto" : "Agregar Nuevo Gasto" }}
+            </h3>
+
+            <!-- Alerta específica del modal de gastos -->
+            <div *ngIf="modalAlertMessageGasto" class="mb-4">
+              <div
+                [ngClass]="{
+                  'bg-green-100 border-green-500 text-green-700':
+                    modalAlertTypeGasto === 'success',
+                  'bg-red-100 border-red-500 text-red-700':
+                    modalAlertTypeGasto === 'error'
+                }"
+                class="border-l-4 p-3 relative rounded"
+              >
+                <p class="text-sm">{{ modalAlertMessageGasto }}</p>
+                <button
+                  (click)="cerrarAlertaModalGasto()"
+                  class="absolute top-1 right-2 text-gray-500 hover:text-gray-700 text-sm"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <form class="space-y-4">
+              <!-- Fecha -->
+              <div>
+                <label
+                  for="modalFechaGasto"
+                  class="block text-sm font-medium text-gray-700"
+                  >Fecha *</label
+                >
+                <input
+                  type="date"
+                  id="modalFechaGasto"
+                  [(ngModel)]="nuevoGasto.fecha"
+                  name="fechaGasto"
+                  required
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <!-- Descripción -->
+              <div>
+                <label
+                  for="modalDescripcionGasto"
+                  class="block text-sm font-medium text-gray-700"
+                  >Descripción *</label
+                >
+                <input
+                  type="text"
+                  id="modalDescripcionGasto"
+                  [(ngModel)]="nuevoGasto.descripcion"
+                  name="descripcionGasto"
+                  required
+                  placeholder="Ej: Compra de materiales, Gasolina, etc."
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <!-- Total -->
+              <div>
+                <label
+                  for="modalTotalGasto"
+                  class="block text-sm font-medium text-gray-700"
+                  >Total *</label
+                >
+                <input
+                  type="number"
+                  id="modalTotalGasto"
+                  [(ngModel)]="nuevoGasto.total"
+                  name="totalGasto"
+                  required
+                  min="0"
+                  step="1"
+                  placeholder="0.00"
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <!-- Comentarios -->
+              <div>
+                <label
+                  for="modalComentariosGasto"
+                  class="block text-sm font-medium text-gray-700"
+                  >Comentarios</label
+                >
+                <textarea
+                  id="modalComentariosGasto"
+                  [(ngModel)]="nuevoGasto.comentarios"
+                  name="comentariosGasto"
+                  rows="3"
+                  placeholder="Detalles adicionales del gasto..."
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                ></textarea>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botones del modal -->
+      <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+        <button
+          type="button"
+          (click)="guardarGasto()"
+          [disabled]="loadingAction"
+          class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
+        >
+          {{
+            loadingAction
+              ? "Guardando..."
+              : modoEdicionGasto
+              ? "Actualizar"
+              : "Guardar"
+          }}
+        </button>
+        <button
+          type="button"
+          (click)="cerrarModalGasto()"
+          [disabled]="loadingAction"
+          class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
+        >
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
