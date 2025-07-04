@@ -46,6 +46,8 @@ export interface ReportsResponse {
       totalItems: number;
       itemsPerPage: number;
     };
+    conjuntoAbiertoAlInicio?: boolean;
+    conjuntoAbiertoAlFinal?: boolean;
   };
 }
 

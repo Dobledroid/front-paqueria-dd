@@ -23,41 +23,19 @@ Chart.register(...registerables);
   styleUrls: ['./home.component.css'],
 })
 export class HomeComponent implements OnInit, AfterViewInit {
+  // Flags para conjuntos abiertos/cerrados en la paginación de reportes
+  conjuntoAbiertoAlInicioReportes: boolean = false;
+  conjuntoAbiertoAlFinalReportes: boolean = false;
+
   /**
-   * Busca conjuntos de elementos entre comentarios "inicio" y "fin" en el campo indicado.
-   * Al encontrar un conjunto, lo muestra por consola.
-   * @param lista Array de elementos (reportes, gastos, etc)
-   * @param campoComentario Nombre del campo de comentario (por defecto 'comentarioPedido')
+   * Ya no se detectan conjuntos en frontend, solo se limpian marcas antiguas si existen.
+   * El pintado de conjuntos ahora depende de los flags del backend.
    */
-  esConjunto(lista: any[], campoComentario: string = 'comentarioPedido'): void {
-    // Limpia la marca de conjunto previa
+  limpiarConjuntosLocales(lista: any[]): void {
     for (const item of lista) {
-      if (item.hasOwnProperty('isConjunto')) {
-        delete item.isConjunto;
-      }
-    }
-    let conjuntoActual: any[] = [];
-    let dentroDeConjunto = false;
-    for (const item of lista) {
-      const comentario = (item[campoComentario] || '').toLowerCase();
-      if (comentario.includes('inicio')) {
-        dentroDeConjunto = true;
-        conjuntoActual = [item];
-      } else if (comentario.includes('fin') && dentroDeConjunto) {
-        conjuntoActual.push(item);
-        // Marca todos los elementos del conjunto
-        conjuntoActual.forEach((el) => (el.isConjunto = true));
-        console.log('El conjunto es:', conjuntoActual);
-        dentroDeConjunto = false;
-        conjuntoActual = [];
-      } else if (dentroDeConjunto) {
-        conjuntoActual.push(item);
-      }
-    }
-    // Si termina la lista y hay un conjunto abierto, puedes decidir si marcarlo o ignorarlo
-    if (dentroDeConjunto && conjuntoActual.length > 0) {
-      conjuntoActual.forEach((el) => (el.isConjunto = true));
-      console.log('Conjunto sin cerrar (sin "fin"): ', conjuntoActual);
+      if (item.hasOwnProperty('isConjunto')) delete item.isConjunto;
+      if (item.hasOwnProperty('isInicioConjunto')) delete item.isInicioConjunto;
+      if (item.hasOwnProperty('isFinConjunto')) delete item.isFinConjunto;
     }
   }
   paginationReportes: Pagination | null = null;
@@ -284,16 +262,22 @@ export class HomeComponent implements OnInit, AfterViewInit {
       }
 
       const response = await this.reportService.getReports(filters).toPromise();
+      // Limpia marcas antiguas (por si acaso)
+      this.limpiarConjuntosLocales(this.reportes);
 
       if (response?.success) {
         this.reportes = response.data.reports || [];
         if (response.data.pagination) {
           this.paginationReportes = response.data.pagination;
         }
-        // Detectar conjuntos automáticamente al cargar reportes
-        this.esConjunto(this.reportes, 'comentarioPedido');
+        // Guardar flags de conjuntos abiertos/cerrados para la página
+        this.conjuntoAbiertoAlInicioReportes = !!response.data.conjuntoAbiertoAlInicio;
+        this.conjuntoAbiertoAlFinalReportes = !!response.data.conjuntoAbiertoAlFinal;
+        // Ya no se detectan conjuntos en frontend, solo se usan los flags del backend
       } else {
         this.reportes = [];
+        this.conjuntoAbiertoAlInicioReportes = false;
+        this.conjuntoAbiertoAlFinalReportes = false;
       }
     } catch (error) {
       this.reportes = [];
@@ -384,7 +368,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
         this.metricas.gastos = this.gastoStats.totalGastado || 0;
         this.updateTotals();
         // Detectar conjuntos automáticamente al cargar gastos
-        this.esConjunto(this.gastos, 'comentarios');
+        // this.esConjunto(this.gastos, 'comentarios');
       } else {
         this.gastos = [];
       }
@@ -1060,6 +1044,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
     if (gasto) {
       this.modoEdicionGasto = true;
       this.gastoEditando = gasto;
+      // Asegura formato correcto para datetime-local
       this.nuevoGasto = {
         fecha: this.formatearFechaParaInput(gasto.fecha),
         descripcion: gasto.descripcion,
@@ -1069,7 +1054,13 @@ export class HomeComponent implements OnInit, AfterViewInit {
     } else {
       this.modoEdicionGasto = false;
       this.gastoEditando = null;
-      this.nuevoGasto = this.resetNuevoGasto();
+      // Default: fecha actual en formato datetime-local
+      this.nuevoGasto = {
+        fecha: moment().format('YYYY-MM-DDTHH:mm'),
+        descripcion: '',
+        comentarios: '',
+        total: 0,
+      };
     }
   }
 
@@ -1090,13 +1081,9 @@ export class HomeComponent implements OnInit, AfterViewInit {
       this.loadingAction = true;
       let response;
 
-      const now = moment();
-      const fechaGastoMoment = moment(this.nuevoGasto.fecha, 'YYYY-MM-DD')
-        .hour(now.hour())
-        .minute(now.minute())
-        .second(now.second());
+      // La fecha ya viene en formato YYYY-MM-DDTHH:mm desde el input
       const gastoData = {
-        fecha: fechaGastoMoment.format('YYYY-MM-DDTHH:mm:ss'),
+        fecha: this.nuevoGasto.fecha,
         descripcion: this.nuevoGasto.descripcion,
         comentarios: this.nuevoGasto.comentarios || '',
         total: this.nuevoGasto.total,
@@ -1302,7 +1289,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
   tieneCupon(comentario: string): boolean {
     if (!comentario) return false;
 
-    const palabrasCupon = ['cup', 'cupon', 'cupón'];
+    const palabrasCupon = ['#cup', '#cupon', '#cupón'];
     const comentarioLower = comentario.toLowerCase();
 
     return palabrasCupon.some((palabra) => comentarioLower.includes(palabra));

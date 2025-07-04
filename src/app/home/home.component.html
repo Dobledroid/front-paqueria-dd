@@ -256,11 +256,11 @@
               [ngClass]="[
                 reporte.isConjunto &&
                 reporte.comentarioPedido &&
-                reporte.comentarioPedido.toLowerCase().includes('inicio')
+                reporte.comentarioPedido.toLowerCase().includes('#inicio#')
                   ? 'conjunto-inicio'
                   : reporte.isConjunto &&
                     reporte.comentarioPedido &&
-                    reporte.comentarioPedido.toLowerCase().includes('fin')
+                    reporte.comentarioPedido.toLowerCase().includes('#fin#')
                   ? 'conjunto-fin'
                   : reporte.isConjunto
                   ? 'conjunto-medio'
@@ -473,6 +473,20 @@
           class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"
         ></div>
         <p class="text-gray-600 mt-2">Cargando gastos...</p>
+      </div>
+      <!-- Resumen de paginación -->
+      <div
+        *ngIf="!loadingGastos && gastos.length > 0 && paginationGastos"
+        class="mb-2 text-sm text-gray-500"
+      >
+        Mostrando página {{ paginationGastos.currentPage }} de
+        {{ paginationGastos.totalPages }} ({{
+          paginationGastos.itemsPerPage
+        }}
+        por página)
+        <span *ngIf="paginationGastos.totalItems"
+          >- Total de registros: {{ paginationGastos.totalItems }}</span
+        >
       </div>
       <!-- Tabla -->
       <div *ngIf="!loadingGastos" class="overflow-x-auto">
@@ -936,7 +950,7 @@
                   >Fecha *</label
                 >
                 <input
-                  type="date"
+                  type="datetime-local"
                   id="modalFechaGasto"
                   [(ngModel)]="nuevoGasto.fecha"
                   name="fechaGasto"
