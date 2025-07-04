@@ -19,6 +19,7 @@ export interface Report {
   usuarioCreador?: string;
   createdAt?: string;
   updatedAt?: string;
+  isConjunto?: boolean; // <-- Marca visual para frontend
 }
 
 export interface ReportStats {

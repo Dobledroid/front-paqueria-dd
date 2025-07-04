@@ -1,9 +1,16 @@
-import { Component, OnInit, AfterViewInit, ElementRef, ViewChild } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  AfterViewInit,
+  ElementRef,
+  ViewChild,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Chart, registerables } from 'chart.js';
 import { ReportService, Report, ReportStats } from '../services/report.service';
 import { GastoService, Gasto, GastoStats } from '../services/gasto.service';
+import { Pagination } from '../models/pagination.model';
 import * as moment from 'moment';
 
 Chart.register(...registerables);
@@ -13,10 +20,50 @@ Chart.register(...registerables);
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './home.component.html',
-  styleUrls: ['./home.component.css']
+  styleUrls: ['./home.component.css'],
 })
 export class HomeComponent implements OnInit, AfterViewInit {
-  @ViewChild('barChart', { static: false }) barChart!: ElementRef<HTMLCanvasElement>;
+  /**
+   * Busca conjuntos de elementos entre comentarios "inicio" y "fin" en el campo indicado.
+   * Al encontrar un conjunto, lo muestra por consola.
+   * @param lista Array de elementos (reportes, gastos, etc)
+   * @param campoComentario Nombre del campo de comentario (por defecto 'comentarioPedido')
+   */
+  esConjunto(lista: any[], campoComentario: string = 'comentarioPedido'): void {
+    // Limpia la marca de conjunto previa
+    for (const item of lista) {
+      if (item.hasOwnProperty('isConjunto')) {
+        delete item.isConjunto;
+      }
+    }
+    let conjuntoActual: any[] = [];
+    let dentroDeConjunto = false;
+    for (const item of lista) {
+      const comentario = (item[campoComentario] || '').toLowerCase();
+      if (comentario.includes('inicio')) {
+        dentroDeConjunto = true;
+        conjuntoActual = [item];
+      } else if (comentario.includes('fin') && dentroDeConjunto) {
+        conjuntoActual.push(item);
+        // Marca todos los elementos del conjunto
+        conjuntoActual.forEach((el) => (el.isConjunto = true));
+        console.log('El conjunto es:', conjuntoActual);
+        dentroDeConjunto = false;
+        conjuntoActual = [];
+      } else if (dentroDeConjunto) {
+        conjuntoActual.push(item);
+      }
+    }
+    // Si termina la lista y hay un conjunto abierto, puedes decidir si marcarlo o ignorarlo
+    if (dentroDeConjunto && conjuntoActual.length > 0) {
+      conjuntoActual.forEach((el) => (el.isConjunto = true));
+      console.log('Conjunto sin cerrar (sin "fin"): ', conjuntoActual);
+    }
+  }
+  paginationReportes: Pagination | null = null;
+  paginationGastos: Pagination | null = null;
+  @ViewChild('barChart', { static: false })
+  barChart!: ElementRef<HTMLCanvasElement>;
 
   loadingMetrics = true;
   loadingReports = true;
@@ -28,7 +75,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
     dineroInvertido: 0,
     ganancias: 0,
     gastos: 0,
-    total: 0
+    total: 0,
   };
 
   metricasMesAnterior = {
@@ -36,7 +83,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
     dineroInvertido: 2500,
     ganancias: 3200,
     gastos: 800,
-    total: 2400
+    total: 2400,
   };
 
   // Variable para rastrear si hay datos del mes anterior
@@ -48,7 +95,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
     inversion: 0,
     ganancias: 0,
     gastos: 0,
-    total: 0
+    total: 0,
   };
 
   fechaInicio: string = '';
@@ -66,8 +113,8 @@ export class HomeComponent implements OnInit, AfterViewInit {
       pendientes: 0,
       enTransito: 0,
       entregados: 0,
-      cancelados: 0
-    }
+      cancelados: 0,
+    },
   };
 
   chart: Chart | null = null;
@@ -77,13 +124,11 @@ export class HomeComponent implements OnInit, AfterViewInit {
   reporteEditando: Report | null = null;
   nuevoReporte: Partial<Report> = {};
 
-  paginaActual = 1;
-  itemsPorPagina = 10;
-  totalPaginas = 1;
+  // Eliminados: paginaActual, itemsPorPagina, totalPaginas
 
   alertMessage = '';
   alertType: 'success' | 'error' | '' = '';
-  
+
   modalAlertMessage = '';
   modalAlertType: 'success' | 'error' | '' = '';
 
@@ -91,7 +136,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
   gastoStats: GastoStats = {
     total: 0,
     totalGastado: 0,
-    promedioGasto: 0
+    promedioGasto: 0,
   };
 
   mostrarModalGasto = false;
@@ -103,9 +148,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
   fechaFinGasto: string = '';
   filtroDescripcion: string = '';
 
-  paginaActualGasto = 1;
-  itemsPorPaginaGasto = 10;
-  totalPaginasGasto = 1;
+  // Eliminados: paginaActualGasto, itemsPorPaginaGasto, totalPaginasGasto
 
   loadingGastos = true;
 
@@ -128,13 +171,13 @@ export class HomeComponent implements OnInit, AfterViewInit {
   ) {
     const hoy = moment();
     const primerDiaMes = moment().startOf('month');
-    
+
     this.fechaFin = hoy.format('YYYY-MM-DD');
     this.fechaInicio = primerDiaMes.format('YYYY-MM-DD');
-    
+
     this.fechaFinGasto = hoy.format('YYYY-MM-DD');
     this.fechaInicioGasto = primerDiaMes.format('YYYY-MM-DD');
-    
+
     this.nuevoReporte = this.getDefaultReport();
     this.nuevoGasto = this.getDefaultGasto();
   }
@@ -147,7 +190,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
       costo: 0,
       ganancia: 0,
       comentarioPedido: '',
-      estado: 'pendiente'
+      estado: 'pendiente',
     };
   }
 
@@ -156,22 +199,33 @@ export class HomeComponent implements OnInit, AfterViewInit {
       fecha: moment().format('YYYY-MM-DDTHH:mm'),
       descripcion: '',
       comentarios: '',
-      total: 0
+      total: 0,
     };
   }
 
   ngOnInit(): void {
     const hoy = moment();
     const primerDiaMes = moment().startOf('month');
-    
+
     this.fechaFin = hoy.format('YYYY-MM-DD');
     this.fechaInicio = primerDiaMes.format('YYYY-MM-DD');
-    
+
     this.fechaFinGasto = hoy.format('YYYY-MM-DD');
     this.fechaInicioGasto = primerDiaMes.format('YYYY-MM-DD');
-    
-    this.paginaActual = 1;
-    this.paginaActualGasto = 1;
+
+    // Inicializar paginación usando el objeto Pagination unificado
+    this.paginationReportes = {
+      currentPage: 1,
+      totalPages: 1,
+      totalItems: 0,
+      itemsPerPage: 10,
+    };
+    this.paginationGastos = {
+      currentPage: 1,
+      totalPages: 1,
+      totalItems: 0,
+      itemsPerPage: 10,
+    };
 
     this.loadDashboardData().then(() => {
       this.updateMetricCardColors();
@@ -182,7 +236,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
     setTimeout(() => {
       this.createFallbackChart();
     }, 100);
-    
+
     setTimeout(() => {
       this.actualizarGraficaConRango();
     }, 2000);
@@ -193,27 +247,21 @@ export class HomeComponent implements OnInit, AfterViewInit {
       await Promise.all([
         this.loadReportStats(),
         this.loadGastoStats(),
-        this.loadMetricasMesAnterior()
+        this.loadMetricasMesAnterior(),
       ]);
-      
-      await Promise.all([
-        this.loadReports(),
-        this.loadGastos()
-      ]);
-      
-      this.calcularMetricasLocales();
+
+      await Promise.all([this.loadReports(), this.loadGastos()]);
     } catch (error) {
       this.mostrarAlerta('Error cargando datos del dashboard', 'error');
     }
   }
 
-
   async loadReports(): Promise<void> {
     try {
       this.loadingReports = true;
       const filters: any = {
-        page: this.paginaActual,
-        limit: this.itemsPorPagina
+        page: this.paginationReportes?.currentPage || 1,
+        limit: this.paginationReportes?.itemsPerPage || 10,
       };
 
       if (this.filtroEstado !== 'todos') {
@@ -221,22 +269,29 @@ export class HomeComponent implements OnInit, AfterViewInit {
       }
 
       if (this.fechaInicio) {
-        const fechaInicioConHora = moment(this.fechaInicio).startOf('day').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z';
+        const fechaInicioConHora =
+          moment(this.fechaInicio)
+            .startOf('day')
+            .format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z';
         filters.fechaDesde = fechaInicioConHora;
       }
 
       if (this.fechaFin) {
-        const fechaFinConHora = moment(this.fechaFin).endOf('day').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z';
+        const fechaFinConHora =
+          moment(this.fechaFin).endOf('day').format('YYYY-MM-DDTHH:mm:ss.SSS') +
+          'Z';
         filters.fechaHasta = fechaFinConHora;
       }
 
       const response = await this.reportService.getReports(filters).toPromise();
-      
+
       if (response?.success) {
         this.reportes = response.data.reports || [];
         if (response.data.pagination) {
-          this.totalPaginas = response.data.pagination.totalPages;
+          this.paginationReportes = response.data.pagination;
         }
+        // Detectar conjuntos automáticamente al cargar reportes
+        this.esConjunto(this.reportes, 'comentarioPedido');
       } else {
         this.reportes = [];
       }
@@ -251,28 +306,39 @@ export class HomeComponent implements OnInit, AfterViewInit {
   async loadReportStats(): Promise<void> {
     try {
       const filters: any = {};
-      
+
       if (this.fechaInicio) {
-        const fechaInicioConHora = moment(this.fechaInicio).startOf('day').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z';
+        const fechaInicioConHora =
+          moment(this.fechaInicio)
+            .startOf('day')
+            .format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z';
         filters.fechaDesde = fechaInicioConHora;
       }
-      
+
       if (this.fechaFin) {
-        const fechaFinConHora = moment(this.fechaFin).endOf('day').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z';
+        const fechaFinConHora =
+          moment(this.fechaFin).endOf('day').format('YYYY-MM-DDTHH:mm:ss.SSS') +
+          'Z';
         filters.fechaHasta = fechaFinConHora;
       }
-      
+
       if (this.filtroEstado !== 'todos') {
         filters.estado = this.filtroEstado;
       }
-      
-      const response = await this.reportService.getReportStats(filters).toPromise();
-      
+
+      const response = await this.reportService
+        .getReportStats(filters)
+        .toPromise();
+
       if (response?.success) {
         this.reportStats = response.data;
-        
-        this.metricas.dineroInvertido = this.reportStats.statistics?.totalCosto || 0;
-        this.metricas.ganancias = this.reportStats.statistics?.totalGanancia || 0;
+
+        console.log(this.reportStats)
+        this.metricas.dineroInvertido =
+          this.reportStats.statistics?.totalCosto || 0;
+        this.metricas.ganancias =
+          this.reportStats.statistics?.totalGanancia || 0;
+          this.metricas.totalPaquetes = this.reportStats.statistics?.totalReports || 0;
         this.updateTotals();
       }
     } catch (error) {
@@ -284,8 +350,8 @@ export class HomeComponent implements OnInit, AfterViewInit {
     try {
       this.loadingGastos = true;
       const filters: any = {
-        page: this.paginaActualGasto,
-        limit: this.itemsPorPaginaGasto
+        page: this.paginationGastos?.currentPage || 1,
+        limit: this.paginationGastos?.itemsPerPage || 10,
       };
 
       if (this.filtroDescripcion) {
@@ -293,24 +359,32 @@ export class HomeComponent implements OnInit, AfterViewInit {
       }
 
       if (this.fechaInicioGasto) {
-        const fechaInicioConHora = moment(this.fechaInicioGasto).startOf('day').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z';
+        const fechaInicioConHora =
+          moment(this.fechaInicioGasto)
+            .startOf('day')
+            .format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z';
         filters.fechaDesde = fechaInicioConHora;
       }
 
       if (this.fechaFinGasto) {
-        const fechaFinConHora = moment(this.fechaFinGasto).endOf('day').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z';
+        const fechaFinConHora =
+          moment(this.fechaFinGasto)
+            .endOf('day')
+            .format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z';
         filters.fechaHasta = fechaFinConHora;
       }
 
       const response = await this.gastoService.getGastos(filters).toPromise();
-      
+
       if (response?.success) {
         this.gastos = response.data.gastos || [];
         if (response.data.pagination) {
-          this.totalPaginasGasto = response.data.pagination.totalPages;
+          this.paginationGastos = response.data.pagination;
         }
         this.metricas.gastos = this.gastoStats.totalGastado || 0;
         this.updateTotals();
+        // Detectar conjuntos automáticamente al cargar gastos
+        this.esConjunto(this.gastos, 'comentarios');
       } else {
         this.gastos = [];
       }
@@ -324,30 +398,37 @@ export class HomeComponent implements OnInit, AfterViewInit {
   async loadGastoStats(): Promise<void> {
     try {
       const filters: any = {};
-      
+
       if (this.fechaInicioGasto) {
-        const fechaInicioConHora = moment(this.fechaInicioGasto).startOf('day').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z';
+        const fechaInicioConHora =
+          moment(this.fechaInicioGasto)
+            .startOf('day')
+            .format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z';
         filters.fechaDesde = fechaInicioConHora;
       }
-      
+
       if (this.fechaFinGasto) {
-        const fechaFinConHora = moment(this.fechaFinGasto).endOf('day').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z';
+        const fechaFinConHora =
+          moment(this.fechaFinGasto)
+            .endOf('day')
+            .format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z';
         filters.fechaHasta = fechaFinConHora;
       }
-      
+
       if (this.filtroDescripcion) {
         filters.descripcion = this.filtroDescripcion;
       }
-      
-      const response = await this.gastoService.getGastoStats(filters).toPromise();
+
+      const response = await this.gastoService
+        .getGastoStats(filters)
+        .toPromise();
       if (response?.success) {
         this.gastoStats = response.data;
-        
+
         this.metricas.gastos = this.gastoStats.totalGastado || 0;
         this.updateTotals();
       }
-    } catch (error) {
-    }
+    } catch (error) {}
   }
 
   async loadChartData(): Promise<void> {
@@ -365,11 +446,11 @@ export class HomeComponent implements OnInit, AfterViewInit {
     if (!this.barChart) return;
 
     const ctx = this.barChart.nativeElement.getContext('2d');
-    
+
     if (this.chart) {
       this.chart.destroy();
     }
-    
+
     this.chart = new Chart(ctx!, {
       type: 'bar',
       data: {
@@ -380,37 +461,37 @@ export class HomeComponent implements OnInit, AfterViewInit {
             data: [234, 267, 289, 301, 278, 287],
             backgroundColor: 'rgba(59, 130, 246, 0.5)',
             borderColor: 'rgb(59, 130, 246)',
-            borderWidth: 1
+            borderWidth: 1,
           },
           {
             label: 'Dinero Invertido (Miles)',
             data: [123, 145, 156, 134, 149, 145],
             backgroundColor: 'rgba(34, 197, 94, 0.5)',
             borderColor: 'rgb(34, 197, 94)',
-            borderWidth: 1
+            borderWidth: 1,
           },
           {
             label: 'Ganancias (Miles)',
             data: [78, 89, 95, 82, 91, 89],
             backgroundColor: 'rgba(168, 85, 247, 0.5)',
             borderColor: 'rgb(168, 85, 247)',
-            borderWidth: 1
+            borderWidth: 1,
           },
           {
             label: 'Gastos (Miles)',
             data: [45, 56, 61, 52, 58, 56],
             backgroundColor: 'rgba(239, 68, 68, 0.5)',
             borderColor: 'rgb(239, 68, 68)',
-            borderWidth: 1
+            borderWidth: 1,
           },
           {
             label: 'Total (Miles)',
             data: [156, 178, 190, 164, 182, 178],
             backgroundColor: 'rgba(99, 102, 241, 0.5)',
             borderColor: 'rgb(99, 102, 241)',
-            borderWidth: 1
-          }
-        ]
+            borderWidth: 1,
+          },
+        ],
       },
       options: {
         responsive: true,
@@ -418,18 +499,18 @@ export class HomeComponent implements OnInit, AfterViewInit {
         plugins: {
           title: {
             display: true,
-            text: 'Análisis Completo - Últimos 6 Meses'
+            text: 'Análisis Completo - Últimos 6 Meses',
           },
           legend: {
-            position: 'top'
-          }
+            position: 'top',
+          },
         },
         scales: {
           y: {
-            beginAtZero: true
-          }
-        }
-      }
+            beginAtZero: true,
+          },
+        },
+      },
     });
   }
 
@@ -470,36 +551,51 @@ export class HomeComponent implements OnInit, AfterViewInit {
 
   private calcularFechasRango(meses: number): { inicio: string; fin: string } {
     const hoy = moment();
-    
+
     const fin = hoy.clone().format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z';
 
     let inicio: string;
     if (meses === 0) {
-      const fechaInicio = moment().subtract(24, 'months').startOf('month').startOf('day');
+      const fechaInicio = moment()
+        .subtract(24, 'months')
+        .startOf('month')
+        .startOf('day');
       inicio = fechaInicio.format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z';
     } else {
-      const fechaInicio = moment().subtract(meses - 1, 'months').startOf('month').startOf('day');
+      const fechaInicio = moment()
+        .subtract(meses - 1, 'months')
+        .startOf('month')
+        .startOf('day');
       inicio = fechaInicio.format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z';
     }
 
     return { inicio, fin };
   }
 
-  private async obtenerReportesPorRango(fechaInicio: string, fechaFin: string): Promise<any[]> {
+  private async obtenerReportesPorRango(
+    fechaInicio: string,
+    fechaFin: string
+  ): Promise<any[]> {
     try {
-      const response = await this.reportService.getReportsForChart(fechaInicio, fechaFin, 'todos').toPromise();
-      
+      const response = await this.reportService
+        .getReportsForChart(fechaInicio, fechaFin, 'todos')
+        .toPromise();
+
       return response || [];
     } catch (error) {
       return [];
     }
   }
 
-  private async obtenerGastosPorRango(fechaInicio: string, fechaFin: string): Promise<any[]> {
+  private async obtenerGastosPorRango(
+    fechaInicio: string,
+    fechaFin: string
+  ): Promise<any[]> {
     try {
-      
-      const response = await this.gastoService.getGastosForChart(fechaInicio, fechaFin, 'todos').toPromise();
-      
+      const response = await this.gastoService
+        .getGastosForChart(fechaInicio, fechaFin, 'todos')
+        .toPromise();
+
       return response || [];
     } catch (error) {
       console.error('💥 FRONTEND obtenerGastosPorRango - Error:', error);
@@ -507,17 +603,21 @@ export class HomeComponent implements OnInit, AfterViewInit {
     }
   }
 
-  private agruparDatosPorMes(reportes: any[], gastos: any[], fechaInicio: string, fechaFin: string): any[] {
-    
+  private agruparDatosPorMes(
+    reportes: any[],
+    gastos: any[],
+    fechaInicio: string,
+    fechaFin: string
+  ): any[] {
     const mesesEnRango = this.generarMesesEnRango(fechaInicio, fechaFin);
-    
-    const datosAgrupados = mesesEnRango.map(mes => {
-      const reporteDelMes = reportes.find(r => {
+
+    const datosAgrupados = mesesEnRango.map((mes) => {
+      const reporteDelMes = reportes.find((r) => {
         const mesReporte = `${r.year}-${r.month.toString().padStart(2, '0')}`;
         return mesReporte === mes.clave;
       });
 
-      const gastoDelMes = gastos.find(g => {
+      const gastoDelMes = gastos.find((g) => {
         const mesGasto = `${g.year}-${g.month.toString().padStart(2, '0')}`;
         return mesGasto === mes.clave;
       });
@@ -535,36 +635,37 @@ export class HomeComponent implements OnInit, AfterViewInit {
         dineroInvertido,
         ganancias,
         gastos: gastosMes,
-        total
+        total,
       };
-      
+
       return datosDelMes;
     });
 
     return datosAgrupados;
   }
 
-  private generarMesesEnRango(fechaInicio: string, fechaFin: string): { clave: string, etiqueta: string }[] {
-    const meses: { clave: string, etiqueta: string }[] = [];
+  private generarMesesEnRango(
+    fechaInicio: string,
+    fechaFin: string
+  ): { clave: string; etiqueta: string }[] {
+    const meses: { clave: string; etiqueta: string }[] = [];
     // Usar .utc() para parsear las fechas como UTC y evitar problemas de zona horaria
     const inicio = moment.utc(fechaInicio);
     const fin = moment.utc(fechaFin);
-    
-    
+
     let mesActual = inicio.clone().startOf('month');
-    
-    
+
     while (mesActual.isSameOrBefore(fin, 'month')) {
       const clave = mesActual.format('YYYY-MM');
       const etiqueta = mesActual.format('MMM YYYY');
-      
+
       meses.push({
         clave,
-        etiqueta
+        etiqueta,
       });
       mesActual.add(1, 'month');
     }
-    
+
     return meses;
   }
 
@@ -573,24 +674,26 @@ export class HomeComponent implements OnInit, AfterViewInit {
       setTimeout(() => this.crearGraficaConDatosAgrupados(), 100);
       return;
     }
-    
+
     if (this.datosAgrupadosPorMes.length === 0) {
       this.createFallbackChart();
       return;
     }
 
     const ctx = this.barChart.nativeElement.getContext('2d');
-    
+
     if (this.chart) {
       this.chart.destroy();
     }
 
-    const labels = this.datosAgrupadosPorMes.map(d => d.mes);
-    const paquetes = this.datosAgrupadosPorMes.map(d => d.totalPaquetes);
-    const dineroInvertido = this.datosAgrupadosPorMes.map(d => d.dineroInvertido);
-    const ganancias = this.datosAgrupadosPorMes.map(d => d.ganancias);
-    const gastos = this.datosAgrupadosPorMes.map(d => d.gastos);
-    const total = this.datosAgrupadosPorMes.map(d => d.total);
+    const labels = this.datosAgrupadosPorMes.map((d) => d.mes);
+    const paquetes = this.datosAgrupadosPorMes.map((d) => d.totalPaquetes);
+    const dineroInvertido = this.datosAgrupadosPorMes.map(
+      (d) => d.dineroInvertido
+    );
+    const ganancias = this.datosAgrupadosPorMes.map((d) => d.ganancias);
+    const gastos = this.datosAgrupadosPorMes.map((d) => d.gastos);
+    const total = this.datosAgrupadosPorMes.map((d) => d.total);
 
     this.chart = new Chart(ctx!, {
       type: 'bar',
@@ -603,7 +706,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
             backgroundColor: 'rgba(59, 130, 246, 0.7)',
             borderColor: 'rgb(59, 130, 246)',
             borderWidth: 1,
-            yAxisID: 'y'
+            yAxisID: 'y',
           },
           {
             label: 'Dinero Invertido',
@@ -611,7 +714,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
             backgroundColor: 'rgba(34, 197, 94, 0.7)',
             borderColor: 'rgb(34, 197, 94)',
             borderWidth: 1,
-            yAxisID: 'y1'
+            yAxisID: 'y1',
           },
           {
             label: 'Ganancias',
@@ -619,7 +722,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
             backgroundColor: 'rgba(168, 85, 247, 0.7)',
             borderColor: 'rgb(168, 85, 247)',
             borderWidth: 1,
-            yAxisID: 'y1'
+            yAxisID: 'y1',
           },
           {
             label: 'Gastos',
@@ -627,7 +730,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
             backgroundColor: 'rgba(239, 68, 68, 0.7)',
             borderColor: 'rgb(239, 68, 68)',
             borderWidth: 1,
-            yAxisID: 'y1'
+            yAxisID: 'y1',
           },
           {
             label: 'Total',
@@ -635,9 +738,9 @@ export class HomeComponent implements OnInit, AfterViewInit {
             backgroundColor: 'rgba(99, 102, 241, 0.7)',
             borderColor: 'rgb(99, 102, 241)',
             borderWidth: 1,
-            yAxisID: 'y1'
-          }
-        ]
+            yAxisID: 'y1',
+          },
+        ],
       },
       options: {
         responsive: true,
@@ -645,12 +748,12 @@ export class HomeComponent implements OnInit, AfterViewInit {
         plugins: {
           title: {
             display: true,
-            text: `Análisis de ${this.obtenerEtiquetaRango()} - Datos Agrupados por Mes`
+            text: `Análisis de ${this.obtenerEtiquetaRango()} - Datos Agrupados por Mes`,
           },
           legend: {
             display: true,
-            position: 'top'
-          }
+            position: 'top',
+          },
         },
         scales: {
           y: {
@@ -660,8 +763,8 @@ export class HomeComponent implements OnInit, AfterViewInit {
             beginAtZero: true,
             title: {
               display: true,
-              text: 'Cantidad de Paquetes'
-            }
+              text: 'Cantidad de Paquetes',
+            },
           },
           y1: {
             type: 'linear',
@@ -670,24 +773,26 @@ export class HomeComponent implements OnInit, AfterViewInit {
             beginAtZero: true,
             title: {
               display: true,
-              text: 'Monto ($)'
+              text: 'Monto ($)',
             },
             grid: {
               drawOnChartArea: false,
             },
             ticks: {
-              callback: function(value) {
+              callback: function (value) {
                 return '$' + Number(value).toLocaleString();
-              }
-            }
-          }
-        }
-      }
+              },
+            },
+          },
+        },
+      },
     });
   }
 
   private obtenerEtiquetaRango(): string {
-    const opcion = this.rangoMesesOpciones.find(op => op.valor === this.rangoMesesChart);
+    const opcion = this.rangoMesesOpciones.find(
+      (op) => op.valor === this.rangoMesesChart
+    );
     return opcion ? `Últimos ${opcion.etiqueta}` : 'Período seleccionado';
   }
 
@@ -714,7 +819,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
             backgroundColor: 'rgba(59, 130, 246, 0.7)',
             borderColor: 'rgb(59, 130, 246)',
             borderWidth: 1,
-            yAxisID: 'y'
+            yAxisID: 'y',
           },
           {
             label: 'Dinero Invertido',
@@ -722,7 +827,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
             backgroundColor: 'rgba(34, 197, 94, 0.7)',
             borderColor: 'rgb(34, 197, 94)',
             borderWidth: 1,
-            yAxisID: 'y1'
+            yAxisID: 'y1',
           },
           {
             label: 'Ganancias',
@@ -730,7 +835,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
             backgroundColor: 'rgba(168, 85, 247, 0.7)',
             borderColor: 'rgb(168, 85, 247)',
             borderWidth: 1,
-            yAxisID: 'y1'
+            yAxisID: 'y1',
           },
           {
             label: 'Gastos',
@@ -738,8 +843,8 @@ export class HomeComponent implements OnInit, AfterViewInit {
             backgroundColor: 'rgba(239, 68, 68, 0.7)',
             borderColor: 'rgb(239, 68, 68)',
             borderWidth: 1,
-            yAxisID: 'y1'
-          }
+            yAxisID: 'y1',
+          },
         ],
       },
       options: {
@@ -752,8 +857,8 @@ export class HomeComponent implements OnInit, AfterViewInit {
           },
           legend: {
             display: true,
-            position: 'top'
-          }
+            position: 'top',
+          },
         },
         scales: {
           y: {
@@ -763,8 +868,8 @@ export class HomeComponent implements OnInit, AfterViewInit {
             beginAtZero: true,
             title: {
               display: true,
-              text: 'Cantidad de Paquetes'
-            }
+              text: 'Cantidad de Paquetes',
+            },
           },
           y1: {
             type: 'linear',
@@ -773,27 +878,28 @@ export class HomeComponent implements OnInit, AfterViewInit {
             beginAtZero: true,
             title: {
               display: true,
-              text: 'Monto ($)'
+              text: 'Monto ($)',
             },
             grid: {
               drawOnChartArea: false,
             },
             ticks: {
-              callback: function(value) {
+              callback: function (value) {
                 return '$' + Number(value).toLocaleString();
-              }
-            }
-          }
-        }
+              },
+            },
+          },
+        },
       },
     });
   }
 
   async aplicarFiltros(): Promise<void> {
-    this.paginaActual = 1;
+    if (this.paginationReportes) {
+      this.paginationReportes.currentPage = 1;
+    }
     await this.loadReports();
     await this.loadReportStats();
-    this.calcularMetricasLocales();
     await this.actualizarGraficaConRango();
   }
 
@@ -801,37 +907,45 @@ export class HomeComponent implements OnInit, AfterViewInit {
     this.filtroEstado = 'todos';
     const hoy = new Date();
     const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-    
+
     this.fechaFin = hoy.toISOString().split('T')[0];
     this.fechaInicio = primerDiaMes.toISOString().split('T')[0];
-    
+
     this.aplicarFiltros();
   }
 
   irAPagina(pagina: number): void {
-    if (pagina >= 1 && pagina <= this.totalPaginas) {
-      this.paginaActual = pagina;
+    if (
+      this.paginationReportes &&
+      pagina >= 1 &&
+      pagina <= this.paginationReportes.totalPages
+    ) {
+      this.paginationReportes.currentPage = pagina;
       this.loadReports();
     }
   }
 
   paginaAnterior(): void {
-    if (this.paginaActual > 1) {
-      this.paginaActual--;
+    if (this.paginationReportes && this.paginationReportes.currentPage > 1) {
+      this.paginationReportes.currentPage--;
       this.loadReports();
     }
   }
 
   paginaSiguiente(): void {
-    if (this.paginaActual < this.totalPaginas) {
-      this.paginaActual++;
+    if (
+      this.paginationReportes &&
+      this.paginationReportes.currentPage < this.paginationReportes.totalPages
+    ) {
+      this.paginationReportes.currentPage++;
       this.loadReports();
     }
   }
 
   get paginasArray(): number[] {
+    if (!this.paginationReportes) return [];
     const paginas = [];
-    for (let i = 1; i <= this.totalPaginas; i++) {
+    for (let i = 1; i <= this.paginationReportes.totalPages; i++) {
       paginas.push(i);
     }
     return paginas;
@@ -849,7 +963,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
         costo: reporte.costo,
         ganancia: reporte.ganancia,
         comentarioPedido: reporte.comentarioPedido || '',
-        estado: reporte.estado
+        estado: reporte.estado,
       };
     } else {
       this.modoEdicion = false;
@@ -882,28 +996,37 @@ export class HomeComponent implements OnInit, AfterViewInit {
       };
 
       if (this.modoEdicion && this.reporteEditando) {
-        response = await this.reportService.updateReport(this.reporteEditando.id!, reporteData).toPromise();
+        response = await this.reportService
+          .updateReport(this.reporteEditando.id!, reporteData)
+          .toPromise();
       } else {
-        response = await this.reportService.createReport(reporteData as Omit<Report, 'id'>).toPromise();
+        response = await this.reportService
+          .createReport(reporteData as Omit<Report, 'id'>)
+          .toPromise();
       }
 
       if (response?.success) {
         this.mostrarAlerta(
-          this.modoEdicion ? 'Reporte actualizado exitosamente' : 'Reporte creado exitosamente',
+          this.modoEdicion
+            ? 'Reporte actualizado exitosamente'
+            : 'Reporte creado exitosamente',
           'success'
         );
         this.cerrarModal();
-        await Promise.all([
-          this.loadReports(),
-          this.loadReportStats(),
-        ]);
-        this.calcularMetricasLocales();
+        await Promise.all([this.loadReports(), this.loadReportStats()]);
         await this.actualizarGraficaConRango();
       } else {
-        this.mostrarAlertaModal('Error al guardar el reporte: ' + (response?.message || 'Error desconocido'), 'error');
+        this.mostrarAlertaModal(
+          'Error al guardar el reporte: ' +
+            (response?.message || 'Error desconocido'),
+          'error'
+        );
       }
     } catch (error: any) {
-      const errorMessage = error?.error?.message || error?.message || 'Error al guardar el reporte';
+      const errorMessage =
+        error?.error?.message ||
+        error?.message ||
+        'Error al guardar el reporte';
       this.mostrarAlertaModal(errorMessage, 'error');
     } finally {
       this.loadingAction = false;
@@ -915,16 +1038,14 @@ export class HomeComponent implements OnInit, AfterViewInit {
 
     try {
       this.loadingAction = true;
-      const response = await this.reportService.deleteReport(reporte.id!).toPromise();
-      
+      const response = await this.reportService
+        .deleteReport(reporte.id!)
+        .toPromise();
+
       if (response?.success) {
         this.mostrarAlerta('Reporte eliminado exitosamente', 'success');
-        await Promise.all([
-          this.loadReports(),
-          this.loadReportStats(),
-        ]);
-        
-        this.calcularMetricasLocales();
+        await Promise.all([this.loadReports(), this.loadReportStats()]);
+
         await this.actualizarGraficaConRango();
       }
     } catch (error) {
@@ -943,7 +1064,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
         fecha: this.formatearFechaParaInput(gasto.fecha),
         descripcion: gasto.descripcion,
         comentarios: gasto.comentarios || '',
-        total: gasto.total
+        total: gasto.total,
       };
     } else {
       this.modoEdicionGasto = false;
@@ -978,37 +1099,46 @@ export class HomeComponent implements OnInit, AfterViewInit {
         fecha: fechaGastoMoment.format('YYYY-MM-DDTHH:mm:ss'),
         descripcion: this.nuevoGasto.descripcion,
         comentarios: this.nuevoGasto.comentarios || '',
-        total: this.nuevoGasto.total
+        total: this.nuevoGasto.total,
       };
 
       if (this.modoEdicionGasto && this.gastoEditando) {
         if (!this.gastoEditando._id) {
-          this.mostrarAlertaModalGasto('Error: No se puede actualizar el gasto porque no tiene ID', 'error');
+          this.mostrarAlertaModalGasto(
+            'Error: No se puede actualizar el gasto porque no tiene ID',
+            'error'
+          );
           return;
         }
-        response = await this.gastoService.updateGasto(this.gastoEditando._id, gastoData).toPromise();
+        response = await this.gastoService
+          .updateGasto(this.gastoEditando._id, gastoData)
+          .toPromise();
       } else {
-        response = await this.gastoService.createGasto(gastoData as Omit<Gasto, 'id'>).toPromise();
+        response = await this.gastoService
+          .createGasto(gastoData as Omit<Gasto, 'id'>)
+          .toPromise();
       }
 
       if (response?.success) {
         this.mostrarAlerta(
-          this.modoEdicionGasto ? 'Gasto actualizado exitosamente' : 'Gasto creado exitosamente',
+          this.modoEdicionGasto
+            ? 'Gasto actualizado exitosamente'
+            : 'Gasto creado exitosamente',
           'success'
         );
         this.cerrarModalGasto();
-        await Promise.all([
-          this.loadGastos(),
-          this.loadGastoStats(),
-        ]);
-        this.calcularMetricasLocales();
-        // Actualizar la gráfica después de guardar un gasto
+        await Promise.all([this.loadGastos(), this.loadGastoStats()]);
         await this.actualizarGraficaConRango();
       } else {
-        this.mostrarAlertaModalGasto('Error al guardar el gasto: ' + (response?.message || 'Error desconocido'), 'error');
+        this.mostrarAlertaModalGasto(
+          'Error al guardar el gasto: ' +
+            (response?.message || 'Error desconocido'),
+          'error'
+        );
       }
     } catch (error: any) {
-      const errorMessage = error?.error?.message || error?.message || 'Error al guardar el gasto';
+      const errorMessage =
+        error?.error?.message || error?.message || 'Error al guardar el gasto';
       this.mostrarAlertaModalGasto(errorMessage, 'error');
     } finally {
       this.loadingAction = false;
@@ -1020,22 +1150,23 @@ export class HomeComponent implements OnInit, AfterViewInit {
 
     try {
       this.loadingAction = true;
-      
+
       if (!gasto._id) {
-        this.mostrarAlerta('Error: No se puede eliminar el gasto porque no tiene ID', 'error');
+        this.mostrarAlerta(
+          'Error: No se puede eliminar el gasto porque no tiene ID',
+          'error'
+        );
         return;
       }
-      
-      const response = await this.gastoService.deleteGasto(gasto._id).toPromise();
-      
+
+      const response = await this.gastoService
+        .deleteGasto(gasto._id)
+        .toPromise();
+
       if (response?.success) {
         this.mostrarAlerta('Gasto eliminado exitosamente', 'success');
-        await Promise.all([
-          this.loadGastos(),
-          this.loadGastoStats(),
-        ]);
-        
-        this.calcularMetricasLocales();
+        await Promise.all([this.loadGastos(), this.loadGastoStats()]);
+
         await this.actualizarGraficaConRango();
       }
     } catch (error) {
@@ -1059,12 +1190,22 @@ export class HomeComponent implements OnInit, AfterViewInit {
     }
 
     if (this.nuevoGasto.descripcion.trim().length < 1) {
-      this.mostrarAlertaModalGasto('La descripción debe tener al menos 1 carácter', 'error');
+      this.mostrarAlertaModalGasto(
+        'La descripción debe tener al menos 1 carácter',
+        'error'
+      );
       return false;
     }
 
-    if (this.nuevoGasto.total === undefined || this.nuevoGasto.total === null || this.nuevoGasto.total < 0) {
-      this.mostrarAlertaModalGasto('El total debe ser mayor o igual a 0', 'error');
+    if (
+      this.nuevoGasto.total === undefined ||
+      this.nuevoGasto.total === null ||
+      this.nuevoGasto.total < 0
+    ) {
+      this.mostrarAlertaModalGasto(
+        'El total debe ser mayor o igual a 0',
+        'error'
+      );
       return false;
     }
 
@@ -1072,11 +1213,11 @@ export class HomeComponent implements OnInit, AfterViewInit {
   }
 
   async aplicarFiltrosGasto(): Promise<void> {
-    this.paginaActualGasto = 1;
+    if (this.paginationGastos) {
+      this.paginationGastos.currentPage = 1;
+    }
     await this.loadGastos();
     await this.loadGastoStats();
-    this.calcularMetricasLocales();
-    // Actualizar la gráfica después de aplicar filtros de gastos
     await this.actualizarGraficaConRango();
   }
 
@@ -1084,37 +1225,45 @@ export class HomeComponent implements OnInit, AfterViewInit {
     this.filtroDescripcion = '';
     const hoy = new Date();
     const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-    
+
     this.fechaFinGasto = hoy.toISOString().split('T')[0];
     this.fechaInicioGasto = primerDiaMes.toISOString().split('T')[0];
-    
+
     this.aplicarFiltrosGasto();
   }
 
   irAPaginaGasto(pagina: number): void {
-    if (pagina >= 1 && pagina <= this.totalPaginasGasto) {
-      this.paginaActualGasto = pagina;
+    if (
+      this.paginationGastos &&
+      pagina >= 1 &&
+      pagina <= this.paginationGastos.totalPages
+    ) {
+      this.paginationGastos.currentPage = pagina;
       this.loadGastos();
     }
   }
 
   paginaAnteriorGasto(): void {
-    if (this.paginaActualGasto > 1) {
-      this.paginaActualGasto--;
+    if (this.paginationGastos && this.paginationGastos.currentPage > 1) {
+      this.paginationGastos.currentPage--;
       this.loadGastos();
     }
   }
 
   paginaSiguienteGasto(): void {
-    if (this.paginaActualGasto < this.totalPaginasGasto) {
-      this.paginaActualGasto++;
+    if (
+      this.paginationGastos &&
+      this.paginationGastos.currentPage < this.paginationGastos.totalPages
+    ) {
+      this.paginationGastos.currentPage++;
       this.loadGastos();
     }
   }
 
   get paginasArrayGasto(): number[] {
+    if (!this.paginationGastos) return [];
     const paginas = [];
-    for (let i = 1; i <= this.totalPaginasGasto; i++) {
+    for (let i = 1; i <= this.paginationGastos.totalPages; i++) {
       paginas.push(i);
     }
     return paginas;
@@ -1123,7 +1272,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
   mostrarAlertaModalGasto(mensaje: string, tipo: 'success' | 'error'): void {
     this.modalAlertMessageGasto = mensaje;
     this.modalAlertTypeGasto = tipo;
-    
+
     setTimeout(() => {
       this.modalAlertMessageGasto = '';
       this.modalAlertTypeGasto = '';
@@ -1138,7 +1287,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
   formatearMoneda(amount: number): string {
     return new Intl.NumberFormat('es-MX', {
       style: 'currency',
-      currency: 'MXN'
+      currency: 'MXN',
     }).format(amount);
   }
 
@@ -1152,11 +1301,11 @@ export class HomeComponent implements OnInit, AfterViewInit {
 
   tieneCupon(comentario: string): boolean {
     if (!comentario) return false;
-    
+
     const palabrasCupon = ['cup', 'cupon', 'cupón'];
     const comentarioLower = comentario.toLowerCase();
-    
-    return palabrasCupon.some(palabra => comentarioLower.includes(palabra));
+
+    return palabrasCupon.some((palabra) => comentarioLower.includes(palabra));
   }
 
   getEstadoClase(estado: string): string {
@@ -1189,88 +1338,71 @@ export class HomeComponent implements OnInit, AfterViewInit {
     }
   }
 
-  calcularMetricasLocales(): void {
-    let totalPaquetes = 0;
-    let dineroInvertido = 0;
-    let ganancias = 0;
-    let gastos = 0;
-    
-    if (this.reportes && this.reportes.length > 0) {
-      totalPaquetes = this.reportes.length;
-      dineroInvertido = this.reportes.reduce((sum, reporte) => sum + (reporte.costo || 0), 0);
-      ganancias = this.reportes.reduce((sum, reporte) => sum + (reporte.ganancia || 0), 0);
-    }
-    
-    if (this.gastos && this.gastos.length > 0) {
-      gastos = this.gastos.reduce((sum, gasto) => sum + (gasto.total || 0), 0);
-    } else if (this.gastoStats && this.gastoStats.totalGastado) {
-      gastos = this.gastoStats.totalGastado;
-    }
-    
-    const total = ganancias - gastos;
-
-    this.metricas = {
-      totalPaquetes,
-      dineroInvertido,
-      ganancias,
-      gastos,
-      total
-    };
-    
-    this.updateMetricCardColors();
-  }
-
   async loadMetricasMesAnterior(): Promise<void> {
     try {
       this.hayDatosMesAnterior = false;
-      
+
       const mesAnterior = moment().subtract(1, 'month');
-      const inicioMesAnterior = mesAnterior.clone().startOf('month').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z';
-      const finMesAnterior = mesAnterior.clone().endOf('month').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z';
-      
+      const inicioMesAnterior =
+        mesAnterior.clone().startOf('month').format('YYYY-MM-DDTHH:mm:ss.SSS') +
+        'Z';
+      const finMesAnterior =
+        mesAnterior.clone().endOf('month').format('YYYY-MM-DDTHH:mm:ss.SSS') +
+        'Z';
+
       this.resumenMesAnterior = {
         mes: mesAnterior.format('MMMM'),
         anio: mesAnterior.year(),
         inversion: 0,
         ganancias: 0,
         gastos: 0,
-        total: 0
+        total: 0,
       };
 
       const filtersReportes = {
         fechaDesde: inicioMesAnterior,
-        fechaHasta: finMesAnterior
+        fechaHasta: finMesAnterior,
       };
 
-      const reportStatsResponse = await this.reportService.getReportStats(filtersReportes).toPromise();
+      const reportStatsResponse = await this.reportService
+        .getReportStats(filtersReportes)
+        .toPromise();
       const filtersGastos = {
         fechaDesde: inicioMesAnterior,
-        fechaHasta: finMesAnterior
+        fechaHasta: finMesAnterior,
       };
 
-      const gastoStatsResponse = await this.gastoService.getGastoStats(filtersGastos).toPromise();
+      const gastoStatsResponse = await this.gastoService
+        .getGastoStats(filtersGastos)
+        .toPromise();
       let hayReportesAnteriores = false;
       let hayGastosAnteriores = false;
 
       if (reportStatsResponse?.success && reportStatsResponse.data.statistics) {
-        this.metricasMesAnterior.totalPaquetes = reportStatsResponse.data.statistics.totalReports || 0;
-        this.metricasMesAnterior.dineroInvertido = reportStatsResponse.data.statistics.totalCosto || 0;
-        this.metricasMesAnterior.ganancias = reportStatsResponse.data.statistics.totalGanancia || 0;
-        
-        this.resumenMesAnterior.inversion = this.metricasMesAnterior.dineroInvertido;
+        this.metricasMesAnterior.totalPaquetes =
+          reportStatsResponse.data.statistics.totalReports || 0;
+        this.metricasMesAnterior.dineroInvertido =
+          reportStatsResponse.data.statistics.totalCosto || 0;
+        this.metricasMesAnterior.ganancias =
+          reportStatsResponse.data.statistics.totalGanancia || 0;
+
+        this.resumenMesAnterior.inversion =
+          this.metricasMesAnterior.dineroInvertido;
         this.resumenMesAnterior.ganancias = this.metricasMesAnterior.ganancias;
-        
+
         hayReportesAnteriores = this.metricasMesAnterior.totalPaquetes > 0;
       }
 
       if (gastoStatsResponse?.success && gastoStatsResponse.data) {
-        this.metricasMesAnterior.gastos = gastoStatsResponse.data.totalGastado || 0;
+        this.metricasMesAnterior.gastos =
+          gastoStatsResponse.data.totalGastado || 0;
         this.resumenMesAnterior.gastos = this.metricasMesAnterior.gastos;
-        
+
         hayGastosAnteriores = this.metricasMesAnterior.gastos > 0;
       }
 
-      this.metricasMesAnterior.total = this.metricasMesAnterior.ganancias - this.metricasMesAnterior.gastos;
+      this.metricasMesAnterior.total =
+        this.metricasMesAnterior.ganancias - this.metricasMesAnterior.gastos;
       this.resumenMesAnterior.total = this.metricasMesAnterior.total;
 
       this.hayDatosMesAnterior = hayReportesAnteriores || hayGastosAnteriores;
@@ -1280,7 +1412,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
         dineroInvertido: 0,
         ganancias: 0,
         gastos: 0,
-        total: 0
+        total: 0,
       };
       this.hayDatosMesAnterior = false;
     }
@@ -1297,7 +1429,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
   mostrarAlerta(mensaje: string, tipo: 'success' | 'error'): void {
     this.alertMessage = mensaje;
     this.alertType = tipo;
-    
+
     setTimeout(() => {
       this.alertMessage = '';
       this.alertType = '';
@@ -1312,7 +1444,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
   mostrarAlertaModal(mensaje: string, tipo: 'success' | 'error'): void {
     this.modalAlertMessage = mensaje;
     this.modalAlertType = tipo;
-    
+
     setTimeout(() => {
       this.modalAlertMessage = '';
       this.modalAlertType = '';
@@ -1337,8 +1469,14 @@ export class HomeComponent implements OnInit, AfterViewInit {
       return false;
     }
 
-    if (!this.nuevoReporte.ubicacionEntrega?.trim() || this.nuevoReporte.ubicacionEntrega.trim().length < 1) {
-      this.mostrarAlertaModal('La ubicación de entrega debe tener al menos 1 carácter', 'error');
+    if (
+      !this.nuevoReporte.ubicacionEntrega?.trim() ||
+      this.nuevoReporte.ubicacionEntrega.trim().length < 1
+    ) {
+      this.mostrarAlertaModal(
+        'La ubicación de entrega debe tener al menos 1 carácter',
+        'error'
+      );
       return false;
     }
 
@@ -1347,13 +1485,24 @@ export class HomeComponent implements OnInit, AfterViewInit {
       return false;
     }
 
-    if (this.nuevoReporte.costo === undefined || this.nuevoReporte.costo === null || this.nuevoReporte.costo < 0) {
+    if (
+      this.nuevoReporte.costo === undefined ||
+      this.nuevoReporte.costo === null ||
+      this.nuevoReporte.costo < 0
+    ) {
       this.mostrarAlertaModal('El costo debe ser mayor o igual a 0', 'error');
       return false;
     }
 
-    if (this.nuevoReporte.ganancia === undefined || this.nuevoReporte.ganancia === null || this.nuevoReporte.ganancia < 0) {
-      this.mostrarAlertaModal('La ganancia debe ser mayor o igual a 0 (puede ser 0 si no hay ganancia)', 'error');
+    if (
+      this.nuevoReporte.ganancia === undefined ||
+      this.nuevoReporte.ganancia === null ||
+      this.nuevoReporte.ganancia < 0
+    ) {
+      this.mostrarAlertaModal(
+        'La ganancia debe ser mayor o igual a 0 (puede ser 0 si no hay ganancia)',
+        'error'
+      );
       return false;
     }
 
@@ -1368,7 +1517,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
   updateMetricCardColors(): void {
     const totalCard = document.getElementById('tarjeta-total');
     const totalValue = document.getElementById('valor-total');
-    
+
     if (totalCard && totalValue) {
       if (this.metricas.total < 0) {
         totalCard.classList.remove('border-indigo-500');
@@ -1388,9 +1537,21 @@ export class HomeComponent implements OnInit, AfterViewInit {
     if (!this.resumenMesAnterior.mes) {
       return '';
     }
-    
-    const formatMoneda = (valor: number) => `$${valor.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-    
-    return `En ${this.resumenMesAnterior.mes} ${this.resumenMesAnterior.anio}: inversión ${formatMoneda(this.resumenMesAnterior.inversion)}, ganancias ${formatMoneda(this.resumenMesAnterior.ganancias)}, gastos ${formatMoneda(this.resumenMesAnterior.gastos)}, total ${formatMoneda(this.resumenMesAnterior.total)}`;
+
+    const formatMoneda = (valor: number) =>
+      `$${valor.toLocaleString('es-MX', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      })}`;
+
+    return `En ${this.resumenMesAnterior.mes} ${
+      this.resumenMesAnterior.anio
+    }: inversión ${formatMoneda(
+      this.resumenMesAnterior.inversion
+    )}, ganancias ${formatMoneda(
+      this.resumenMesAnterior.ganancias
+    )}, gastos ${formatMoneda(
+      this.resumenMesAnterior.gastos
+    )}, total ${formatMoneda(this.resumenMesAnterior.total)}`;
   }
 }

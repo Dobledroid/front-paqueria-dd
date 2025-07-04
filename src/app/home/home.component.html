@@ -34,7 +34,7 @@
           <div>
             <h3 class="text-lg font-semibold text-gray-700">Total Paquetes</h3>
             <p class="text-3xl font-bold text-blue-600">
-              {{ metricas.totalPaquetes }}
+              {{ metricas.totalPaquetes | number : "1.0-2" }}
             </p>
           </div>
         </div>
@@ -49,7 +49,7 @@
           <div>
             <h3 class="text-lg font-semibold text-gray-700">Inversión</h3>
             <p class="text-3xl font-bold text-green-600">
-              ${{ metricas.dineroInvertido }}
+              ${{ metricas.dineroInvertido | number : "1.2-2" }}
             </p>
           </div>
         </div>
@@ -64,7 +64,7 @@
           <div>
             <h3 class="text-lg font-semibold text-gray-700">Ganancias</h3>
             <p class="text-3xl font-bold text-purple-600">
-              ${{ metricas.ganancias }}
+              ${{ metricas.ganancias | number : "1.2-2" }}
             </p>
           </div>
         </div>
@@ -79,7 +79,7 @@
           <div>
             <h3 class="text-lg font-semibold text-gray-700">Gastos</h3>
             <p class="text-3xl font-bold text-red-600">
-              ${{ metricas.gastos }}
+              ${{ metricas.gastos | number : "1.2-2" }}
             </p>
           </div>
         </div>
@@ -95,7 +95,7 @@
           <div>
             <h3 class="text-lg font-semibold text-gray-700">Total</h3>
             <p id="valor-total" class="text-3xl font-bold text-indigo-600">
-              ${{ metricas.total }}
+              ${{ metricas.total | number : "1.2-2" }}
             </p>
           </div>
         </div>
@@ -114,33 +114,37 @@
       <div
         class="flex flex-col lg:flex-row gap-4 mb-6 p-4 bg-gray-50 rounded-lg"
       >
-        <div class="flex-1">
-          <label
-            for="fechaInicio"
-            class="block text-sm font-medium text-gray-700 mb-1"
-            >Fecha Inicio</label
-          >
-          <input
-            type="date"
-            id="fechaInicio"
-            [(ngModel)]="fechaInicio"
-            (change)="aplicarFiltros()"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        <div class="flex-1">
-          <label
-            for="fechaFin"
-            class="block text-sm font-medium text-gray-700 mb-1"
-            >Fecha Fin</label
-          >
-          <input
-            type="date"
-            id="fechaFin"
-            [(ngModel)]="fechaFin"
-            (change)="aplicarFiltros()"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+        <div class="flex flex-1 gap-2 items-end">
+          <div class="flex flex-col">
+            <label
+              for="fechaInicio"
+              class="text-sm font-medium text-gray-700 mb-1"
+              style="width: auto; min-width: 0"
+              >Fecha Inicio</label
+            >
+            <input
+              type="date"
+              id="fechaInicio"
+              [(ngModel)]="fechaInicio"
+              (change)="aplicarFiltros()"
+              class="min-w-[120px] w-auto px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              style="width: 100%"
+            />
+          </div>
+          <div class="flex-1">
+            <label
+              for="fechaFin"
+              class="block text-sm font-medium text-gray-700 mb-1"
+              >Fecha Fin</label
+            >
+            <input
+              type="date"
+              id="fechaFin"
+              [(ngModel)]="fechaFin"
+              (change)="aplicarFiltros()"
+              class="min-w-[120px] w-auto px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
         </div>
         <div class="flex-1">
           <label
@@ -162,13 +166,6 @@
           </select>
         </div>
         <div class="flex items-end gap-2">
-          <button
-            (click)="aplicarFiltros()"
-            [disabled]="loadingReports"
-            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors disabled:opacity-50"
-          >
-            {{ loadingReports ? "Filtrando..." : "Filtrar" }}
-          </button>
           <button
             (click)="limpiarFiltros()"
             class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
@@ -192,6 +189,20 @@
         <p class="text-gray-600 mt-2">Cargando reportes...</p>
       </div>
 
+      <!-- Resumen de paginación -->
+      <div
+        *ngIf="!loadingReports && reportes.length > 0 && paginationReportes"
+        class="mb-2 text-sm text-gray-500"
+      >
+        Mostrando página {{ paginationReportes.currentPage }} de
+        {{ paginationReportes.totalPages }} ({{
+          paginationReportes.itemsPerPage
+        }}
+        por página)
+        <span *ngIf="paginationReportes.totalItems"
+          >- Total de registros: {{ paginationReportes.totalItems }}</span
+        >
+      </div>
       <!-- Tabla -->
       <div *ngIf="!loadingReports" class="overflow-x-auto">
         <table class="min-w-full table-auto">
@@ -241,8 +252,21 @@
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <tr
-              *ngFor="let reporte of reportes"
-              class="hover:bg-gray-50 transition-colors"
+              *ngFor="let reporte of reportes; let i = index"
+              [ngClass]="[
+                reporte.isConjunto &&
+                reporte.comentarioPedido &&
+                reporte.comentarioPedido.toLowerCase().includes('inicio')
+                  ? 'conjunto-inicio'
+                  : reporte.isConjunto &&
+                    reporte.comentarioPedido &&
+                    reporte.comentarioPedido.toLowerCase().includes('fin')
+                  ? 'conjunto-fin'
+                  : reporte.isConjunto
+                  ? 'conjunto-medio'
+                  : '',
+                'transition-colors'
+              ]"
             >
               <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                 {{ formatearFecha(reporte.fechaPedido) }}
@@ -261,9 +285,19 @@
                 {{ formatearMoneda(reporte.costo) }}
               </td>
               <td class="px-4 py-4 whitespace-nowrap text-sm font-medium">
-                <span class="text-green-600">{{
-                  formatearMoneda(reporte.ganancia)
-                }}</span>
+                <span class="relative inline-block">
+                  <span class="text-green-600">{{
+                    formatearMoneda(reporte.ganancia)
+                  }}</span>
+                  <span
+                    *ngIf="tieneCupon(reporte.comentarioPedido)"
+                    class="absolute -top-3 -right-6 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-md border border-yellow-300 flex items-center justify-center"
+                    style="z-index: 10; min-width: 18px; min-height: 18px"
+                    title="Cupón aplicado"
+                  >
+                    ⬆️
+                  </span>
+                </span>
               </td>
               <td class="px-4 py-4 whitespace-nowrap text-sm">
                 <span
@@ -312,26 +346,35 @@
 
       <!-- Paginación -->
       <div
-        *ngIf="!loadingReports && totalPaginas > 1"
-        class="flex justify-center items-center mt-6 gap-2"
+        *ngIf="
+          !loadingReports &&
+          paginationReportes &&
+          paginationReportes.totalPages > 1
+        "
+        class="flex flex-wrap justify-end items-center mt-6 gap-1"
       >
         <button
           (click)="paginaAnterior()"
-          [disabled]="paginaActual === 1"
-          class="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          [disabled]="
+            !paginationReportes || paginationReportes.currentPage === 1
+          "
+          class="px-2 py-1 text-sm bg-white text-blue-600 rounded border border-gray-300 hover:bg-blue-50 hover:border-blue-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[28px] min-h-[28px]"
+          title="Anterior"
         >
-          Anterior
+          <span class="text-base">&#60;</span>
         </button>
 
-        <div class="flex gap-1">
+        <div class="flex flex-wrap gap-0.5 max-w-full overflow-x-auto">
           <button
             *ngFor="let pagina of paginasArray"
             (click)="irAPagina(pagina)"
-            [ngClass]="{
-              'bg-blue-600 text-white': pagina === paginaActual,
-              'bg-gray-200 text-gray-700': pagina !== paginaActual
-            }"
-            class="px-3 py-2 rounded-md hover:bg-blue-500 hover:text-white transition-colors"
+            [ngClass]="[
+              'px-2 py-1 text-sm rounded min-w-[28px] min-h-[28px] border transition-colors',
+              pagina === paginationReportes.currentPage
+                ? 'border-current text-blue-600 outline-none bg-white font-bold'
+                : 'border-gray-300 text-blue-600 hover:bg-blue-50 hover:border-blue-300 font-normal bg-white'
+            ]"
+            style="outline: none; box-shadow: none"
           >
             {{ pagina }}
           </button>
@@ -339,10 +382,14 @@
 
         <button
           (click)="paginaSiguiente()"
-          [disabled]="paginaActual === totalPaginas"
-          class="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          [disabled]="
+            !paginationReportes ||
+            paginationReportes.currentPage === paginationReportes.totalPages
+          "
+          class="px-2 py-1 text-sm bg-white text-blue-600 rounded border border-gray-300 hover:bg-blue-50 hover:border-blue-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[28px] min-h-[28px]"
+          title="Siguiente"
         >
-          Siguiente
+          <span class="text-base">&#62;</span>
         </button>
       </div>
     </div>
@@ -353,37 +400,41 @@
     <div class="bg-white rounded-lg shadow-lg p-6">
       <h2 class="text-2xl font-bold text-gray-800 mb-6">Gestión de Gastos</h2>
 
-      <!-- Filtros de Fecha, Descripción y Botón Agregar -->
+      <!-- Filtros de Gastos (homologados con Reportes) -->
       <div
         class="flex flex-col lg:flex-row gap-4 mb-6 p-4 bg-gray-50 rounded-lg"
       >
-        <div class="flex-1">
-          <label
-            for="fechaInicioGasto"
-            class="block text-sm font-medium text-gray-700 mb-1"
-            >Fecha Inicio</label
-          >
-          <input
-            type="date"
-            id="fechaInicioGasto"
-            [(ngModel)]="fechaInicioGasto"
-            (change)="aplicarFiltrosGasto()"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        <div class="flex-1">
-          <label
-            for="fechaFinGasto"
-            class="block text-sm font-medium text-gray-700 mb-1"
-            >Fecha Fin</label
-          >
-          <input
-            type="date"
-            id="fechaFinGasto"
-            [(ngModel)]="fechaFinGasto"
-            (change)="aplicarFiltrosGasto()"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+        <div class="flex flex-1 gap-2 items-end">
+          <div class="flex flex-col">
+            <label
+              for="fechaInicioGasto"
+              class="text-sm font-medium text-gray-700 mb-1"
+              style="width: auto; min-width: 0"
+              >Fecha Inicio</label
+            >
+            <input
+              type="date"
+              id="fechaInicioGasto"
+              [(ngModel)]="fechaInicioGasto"
+              (change)="aplicarFiltrosGasto()"
+              class="min-w-[120px] w-auto px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              style="width: 100%"
+            />
+          </div>
+          <div class="flex-1">
+            <label
+              for="fechaFinGasto"
+              class="block text-sm font-medium text-gray-700 mb-1"
+              >Fecha Fin</label
+            >
+            <input
+              type="date"
+              id="fechaFinGasto"
+              [(ngModel)]="fechaFinGasto"
+              (change)="aplicarFiltrosGasto()"
+              class="min-w-[120px] w-auto px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
         </div>
         <div class="flex-1">
           <label
@@ -401,13 +452,6 @@
           />
         </div>
         <div class="flex items-end gap-2">
-          <button
-            (click)="aplicarFiltrosGasto()"
-            [disabled]="loadingGastos"
-            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors disabled:opacity-50"
-          >
-            {{ loadingGastos ? "Filtrando..." : "Filtrar" }}
-          </button>
           <button
             (click)="limpiarFiltrosGasto()"
             class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
@@ -516,26 +560,31 @@
       </div>
       <!-- Paginación -->
       <div
-        *ngIf="!loadingGastos && totalPaginasGasto > 1"
-        class="flex justify-center items-center mt-6 gap-2"
+        *ngIf="
+          !loadingGastos && paginationGastos && paginationGastos.totalPages > 1
+        "
+        class="flex flex-wrap justify-end items-center mt-6 gap-1"
       >
         <button
           (click)="paginaAnteriorGasto()"
-          [disabled]="paginaActualGasto === 1"
-          class="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          [disabled]="!paginationGastos || paginationGastos.currentPage === 1"
+          class="px-2 py-1 text-sm bg-white text-blue-600 rounded border border-gray-300 hover:bg-blue-50 hover:border-blue-300 disabled:opacity-50 disabled:cursor-not-allowed min-w-[28px] min-h-[28px]"
+          title="Anterior"
         >
-          Anterior
+          <span class="text-base">&#60;</span>
         </button>
 
-        <div class="flex gap-1">
+        <div class="flex flex-wrap gap-0.5 max-w-full overflow-x-auto">
           <button
             *ngFor="let pagina of paginasArrayGasto"
             (click)="irAPaginaGasto(pagina)"
-            [ngClass]="{
-              'bg-blue-600 text-white': pagina === paginaActualGasto,
-              'bg-gray-200 text-gray-700': pagina !== paginaActualGasto
-            }"
-            class="px-3 py-2 rounded-md hover:bg-blue-500 hover:text-white transition-colors"
+            [ngClass]="[
+              'px-2 py-1 text-sm rounded min-w-[28px] min-h-[28px] border transition-colors',
+              pagina === paginationGastos.currentPage
+                ? 'border-current text-blue-600 outline-none bg-white font-bold'
+                : 'border-gray-300 text-blue-600 hover:bg-blue-50 hover:border-blue-300 font-normal bg-white'
+            ]"
+            style="outline: none; box-shadow: none"
           >
             {{ pagina }}
           </button>
@@ -543,10 +592,14 @@
 
         <button
           (click)="paginaSiguienteGasto()"
-          [disabled]="paginaActualGasto === totalPaginasGasto"
-          class="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          [disabled]="
+            !paginationGastos ||
+            paginationGastos.currentPage === paginationGastos.totalPages
+          "
+          class="px-2 py-1 text-sm bg-transparent text-blue-600 rounded border border-transparent hover:bg-blue-50 hover:border-blue-300 disabled:opacity-50 disabled:cursor-not-allowed min-w-[28px] min-h-[28px]"
+          title="Siguiente"
         >
-          Siguiente
+          <span class="text-base">&#62;</span>
         </button>
       </div>
     </div>
@@ -555,9 +608,31 @@
   <!-- Sección 4: Gráfica de Barras -->
   <section class="mb-12">
     <div class="bg-white rounded-lg shadow-lg p-6">
-      <h2 class="text-2xl font-bold text-gray-800 mb-6">
-        Análisis Gráfico - Últimos 6 Meses
-      </h2>
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">
+          Análisis Gráfico - Últimos 6 Meses
+        </h2>
+        <div>
+          <label
+            for="rangoMesesChart"
+            class="mr-2 text-sm text-gray-700 font-medium"
+            >Rango:</label
+          >
+          <select
+            id="rangoMesesChart"
+            [(ngModel)]="rangoMesesChart"
+            (change)="cambiarRangoMeses(rangoMesesChart)"
+            class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option
+              *ngFor="let opcion of rangoMesesOpciones"
+              [value]="opcion.valor"
+            >
+              {{ opcion.etiqueta }}
+            </option>
+          </select>
+        </div>
+      </div>
 
       <div *ngIf="loadingChart" class="text-center py-8">
         <div
