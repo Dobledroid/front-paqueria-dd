@@ -1018,25 +1018,9 @@ export class HomeComponent implements OnInit, AfterViewInit {
   }
 
   async eliminarReporte(reporte: Report): Promise<void> {
-    if (!confirm('¿Estás seguro de que deseas eliminar este reporte?')) return;
-
-    try {
-      this.loadingAction = true;
-      const response = await this.reportService
-        .deleteReport(reporte.id!)
-        .toPromise();
-
-      if (response?.success) {
-        this.mostrarAlerta('Reporte eliminado exitosamente', 'success');
-        await Promise.all([this.loadReports(), this.loadReportStats()]);
-
-        await this.actualizarGraficaConRango();
-      }
-    } catch (error) {
-      this.mostrarAlerta('Error al eliminar el reporte', 'error');
-    } finally {
-      this.loadingAction = false;
-    }
+    this.tipoAEliminar = 'reporte';
+    this.objetoAEliminar = reporte;
+    this.mostrarModalEliminar = true;
   }
 
   abrirModalGasto(gasto?: Gasto): void {
@@ -1133,33 +1117,55 @@ export class HomeComponent implements OnInit, AfterViewInit {
   }
 
   async eliminarGasto(gasto: Gasto): Promise<void> {
-    if (!confirm('¿Estás seguro de que deseas eliminar este gasto?')) return;
+    this.tipoAEliminar = 'gasto';
+    this.objetoAEliminar = gasto;
+    this.mostrarModalEliminar = true;
+  }
+  // Modal genérico para eliminar reporte o gasto
+  mostrarModalEliminar: boolean = false;
+  tipoAEliminar: 'reporte' | 'gasto' | null = null;
+  objetoAEliminar: any = null;
 
+  cerrarModalEliminar(): void {
+    this.mostrarModalEliminar = false;
+    this.tipoAEliminar = null;
+    this.objetoAEliminar = null;
+  }
+
+  async confirmarEliminar(): Promise<void> {
+    if (!this.tipoAEliminar || !this.objetoAEliminar) return;
+    this.loadingAction = true;
     try {
-      this.loadingAction = true;
-
-      if (!gasto._id) {
-        this.mostrarAlerta(
-          'Error: No se puede eliminar el gasto porque no tiene ID',
-          'error'
-        );
-        return;
-      }
-
-      const response = await this.gastoService
-        .deleteGasto(gasto._id)
-        .toPromise();
-
-      if (response?.success) {
-        this.mostrarAlerta('Gasto eliminado exitosamente', 'success');
-        await Promise.all([this.loadGastos(), this.loadGastoStats()]);
-
-        await this.actualizarGraficaConRango();
+      if (this.tipoAEliminar === 'reporte') {
+        const reporte = this.objetoAEliminar as Report;
+        const response = await this.reportService.deleteReport(reporte.id!).toPromise();
+        if (response?.success) {
+          this.mostrarAlerta('Reporte eliminado exitosamente', 'success');
+          await Promise.all([this.loadReports(), this.loadReportStats()]);
+          await this.actualizarGraficaConRango();
+        } else {
+          this.mostrarAlerta('Error al eliminar el reporte', 'error');
+        }
+      } else if (this.tipoAEliminar === 'gasto') {
+        const gasto = this.objetoAEliminar as Gasto;
+        if (!gasto._id) {
+          this.mostrarAlerta('Error: No se puede eliminar el gasto porque no tiene ID', 'error');
+          return;
+        }
+        const response = await this.gastoService.deleteGasto(gasto._id).toPromise();
+        if (response?.success) {
+          this.mostrarAlerta('Gasto eliminado exitosamente', 'success');
+          await Promise.all([this.loadGastos(), this.loadGastoStats()]);
+          await this.actualizarGraficaConRango();
+        } else {
+          this.mostrarAlerta('Error al eliminar el gasto', 'error');
+        }
       }
     } catch (error) {
-      this.mostrarAlerta('Error al eliminar el gasto', 'error');
+      this.mostrarAlerta('Error al eliminar', 'error');
     } finally {
       this.loadingAction = false;
+      this.cerrarModalEliminar();
     }
   }
 

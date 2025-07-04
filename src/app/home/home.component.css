@@ -1,3 +1,8 @@
+/* Utilidades de ancho personalizadas para columnas de acción en tablas */
+.width-accions {
+  width: 6.86rem !important;
+}
+
 /* Hover general para todas las filas de la tabla, incluyendo conjuntos */
 tbody tr:hover td {
   background-color: #e0f2fe !important;
