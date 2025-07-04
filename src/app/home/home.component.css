@@ -1,20 +1,14 @@
-/* Utilidades de ancho personalizadas para columnas de acción en tablas */
 .width-accions {
   width: 6.86rem !important;
 }
-
-/* Hover general para todas las filas de la tabla, incluyendo conjuntos */
 tbody tr:hover td {
   background-color: #e0f2fe !important;
   transition: background-color 0.2s;
 }
-/* Asegura que los bordes de los td sean independientes y siempre visibles en hover */
 table.table-auto {
   border-collapse: separate !important;
   border-spacing: 0;
 }
-
-/* --- Bordes personalizados para conjuntos en la tabla de reportes --- */
 .conjunto-inicio td {
   border-top: 2px solid #60a5fa !important;
   border-bottom: none !important;
@@ -48,81 +42,6 @@ table.table-auto {
 .conjunto-fin td:last-child {
   border-right: 2px solid #60a5fa !important;
 }
-
-
-.border-t-5 {
-  border-top: 5px solid #22c55e !important; /* Verde Tailwind 500 */
-  position: relative;
-  z-index: 3;
-}
-
-.border-b-5 {
-  border-bottom: 5px solid #ef4444 !important; /* Rojo Tailwind 500 */
-  position: relative;
-  z-index: 3;
-}
-
-/* Asegurar que los bordes sobresalgan sobre los divisores de la tabla */
-tbody tr.border-blue-400,
-tbody tr.border-t-5,
-tbody tr.border-b-5 {
-  background-clip: padding-box;
-}
-
-/* Opcional: mejorar la visibilidad en hover */
-tbody tr.border-blue-400:hover,
-tbody tr.border-t-5:hover,
-tbody tr.border-b-5:hover {
-  background-color: #e0f2fe !important; /* Azul claro al hacer hover */
-}
-/* ===================== */
-/* Estilos para conjuntos en la tabla de reportes */
-/* ===================== */
-
-/* Borde azul para todo el conjunto */
-.border-conjunto,
-.border-blue-400 {
-  border: 1.5px solid #60a5fa !important; /* azul-400, grosor reducido */
-  box-shadow: 0 0 0 1px #60a5fa33;
-}
-
-/* Borde superior verde para el inicio del conjunto */
-.border-t-conjunto,
-.border-t-5,
-.border-t-5.border-green-500 {
-  border-top-width: 5px !important;
-  border-top-color: #22c55e !important; /* verde-500 */
-}
-
-/* Borde inferior rojo para el fin del conjunto */
-.border-b-conjunto,
-.border-b-5,
-.border-b-5.border-red-500 {
-  border-bottom-width: 5px !important;
-  border-bottom-color: #ef4444 !important; /* rojo-500 */
-}
-
-/* Asegura que los bordes no se sobrescriban por divide-y o bg-white */
-tbody.bg-white > tr.border-2 {
-  background: #fff;
-  border-radius: 0.5rem;
-  /* Opcional: para que el borde se vea más notorio */
-  box-shadow: 0 2px 8px 0 #60a5fa22;
-}
-
-/* Opcional: resalta el borde cuando es inicio y fin a la vez */
-.border-t-5.border-b-5 {
-  border-top-width: 5px !important;
-  border-bottom-width: 5px !important;
-  border-top-color: #22c55e !important;
-  border-bottom-color: #ef4444 !important;
-}
-
-/* Opcional: transición suave para los bordes */
-tbody.bg-white > tr {
-  transition: border 0.2s, box-shadow 0.2s;
-}
-/* Estilos específicos del componente home */
 
 /* Animaciones para las tarjetas de métricas */
 .bg-white {
