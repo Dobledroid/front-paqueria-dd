@@ -3,7 +3,6 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
-import * as moment from 'moment'; // Importar moment.js para manejo consistente de fechas
 
 export interface Report {
   id?: number;
@@ -19,7 +18,7 @@ export interface Report {
   usuarioCreador?: string;
   createdAt?: string;
   updatedAt?: string;
-  isConjunto?: boolean; // <-- Marca visual para frontend
+  isConjunto?: boolean;
 }
 
 export interface ReportStats {
@@ -58,7 +57,6 @@ export class ReportService {
 
   constructor(private http: HttpClient) { }
 
-  // Obtener todos los reportes con filtros opcionales
   getReports(filters?: {
     estado?: string;
     page?: number;
@@ -95,7 +93,6 @@ export class ReportService {
       );
   }
 
-  // Obtener un reporte por ID
   getReportById(id: number): Observable<any> {
     return this.http.get<any>(`${environment.apiUrl}/reports/${id}`)
       .pipe(
@@ -106,13 +103,8 @@ export class ReportService {
       );
   }
 
-  // Crear un nuevo reporte
   createReport(report: Omit<Report, 'id'>): Observable<any> {
-    // NO modificar la fecha - el componente ya envía el formato correcto YYYY-MM-DDTHH:mm:ss
     const reportData = { ...report };
-    
-    console.log('SERVICE: Datos recibidos del componente:', reportData);
-    console.log('SERVICE: fechaPedido que se enviará al backend:', reportData.fechaPedido);
 
     return this.http.post<any>(`${environment.apiUrl}/reports`, reportData)
       .pipe(
@@ -126,14 +118,8 @@ export class ReportService {
       );
   }
 
-  // Actualizar un reporte existente
   updateReport(id: number, report: Partial<Report>): Observable<any> {
-    // NO modificar la fecha - el componente ya envía el formato correcto YYYY-MM-DDTHH:mm:ss
     const reportData = { ...report };
-    
-    console.log('SERVICE UPDATE: Datos recibidos del componente:', reportData);
-    console.log('SERVICE UPDATE: fechaPedido que se enviará al backend:', reportData.fechaPedido);
-
     return this.http.put<any>(`${environment.apiUrl}/reports/${id}`, reportData)
       .pipe(
         map(response => {
@@ -146,7 +132,6 @@ export class ReportService {
       );
   }
 
-  // Eliminar un reporte
   deleteReport(id: number): Observable<any> {
     return this.http.delete<any>(`${environment.apiUrl}/reports/${id}`)
       .pipe(
@@ -160,7 +145,6 @@ export class ReportService {
       );
   }
 
-  // Obtener estadísticas de reportes
   getReportStats(filters?: {
     fechaDesde?: string;
     fechaHasta?: string;
@@ -179,7 +163,6 @@ export class ReportService {
         params = params.set('estado', filters.estado);
       }
     }
-    
     return this.http.get<{ success: boolean; data: ReportStats }>(`${environment.apiUrl}/reports/stats`, { params })
       .pipe(
         catchError(error => {
@@ -189,7 +172,6 @@ export class ReportService {
       );
   }
 
-  // Obtener estadísticas de reportes
   getStats(fechaDesde?: string, fechaHasta?: string): Observable<ReportStats> {
     let params = new HttpParams();
     
@@ -211,7 +193,6 @@ export class ReportService {
       );
   }
 
-  // Obtener datos de reportes para el gráfico
   getReportsForChart(fechaDesde?: string, fechaHasta?: string, estado?: string): Observable<any> {
     let params = new HttpParams();
     
@@ -242,7 +223,6 @@ export class ReportService {
       );
   }
 
-  // Métodos de utilidad
   calculateTotal(costo: number, ganancia: number): number {
     return costo + ganancia;
   }
