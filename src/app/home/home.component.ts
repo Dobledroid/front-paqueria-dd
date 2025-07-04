@@ -317,7 +317,6 @@ export class HomeComponent implements OnInit, AfterViewInit {
       if (response?.success) {
         this.reportStats = response.data;
 
-        console.log(this.reportStats)
         this.metricas.dineroInvertido =
           this.reportStats.statistics?.totalCosto || 0;
         this.metricas.ganancias =
